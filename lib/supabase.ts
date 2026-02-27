@@ -3,35 +3,22 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 
 /**
- * Ultra-Robust Environment Variable Access
- * Ensures Supabase initialization doesn't crash even if env vars are completely missing.
- * Now works both on Server and Browser (Client-side).
+ * Global Configuration with Fallbacks
+ * This ensures the app doesn't crash if environment variables are missing.
+ * Placeholders follow the user-requested pattern.
  */
-function getEnv(name: string, isRequired = false): string {
-  const value = process.env[name];
-  
-  if (!value || value.trim() === '') {
-    if (isRequired) {
-      if (name.includes('URL')) {
-        // Return a valid URL format to prevent @supabase/supabase-js from throwing
-        return 'https://placeholder-project.supabase.co';
-      }
-      if (name.includes('KEY')) {
-        // Return a valid JWT-like format to prevent validation errors
-        return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.static-fallback-key';
-      }
-      return 'static-build-fallback';
-    }
-    return '';
-  }
-  return value;
-}
+export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 
-// Global Configs
-export const SUPABASE_URL = getEnv('NEXT_PUBLIC_SUPABASE_URL', true);
-export const SUPABASE_ANON_KEY = getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', true);
-const SUPABASE_SERVICE_ROLE_KEY = getEnv('SUPABASE_SERVICE_ROLE_KEY');
-const OPENAI_API_KEY = getEnv('OPENAI_API_KEY');
+/**
+ * createSupabaseClient (Client Component Helper)
+ * Used in browser-side code to maintain session state.
+ */
+export function createSupabaseClient(): SupabaseClient {
+  return createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
 
 /**
  * OpenAI Instance (Server-only lazy getter)
@@ -45,9 +32,12 @@ export const getOpenAI = () => {
   return _openai;
 };
 
-// Exporting proxy to maintain backward compatibility in API routes
+// Proxy for backward compatibility in API routes
 export const openai = (typeof window === 'undefined') ? new Proxy({} as OpenAI, {
-  get: (_, prop) => (getOpenAI() as any)[prop]
+  get: (_, prop) => {
+    const instance = getOpenAI();
+    return (instance as any)[prop];
+  }
 }) : null as unknown as OpenAI;
 
 /**
@@ -73,19 +63,13 @@ export const getSupabaseAdmin = () => {
 
 // Proxy for backward compatibility
 export const supabaseAdmin = (typeof window === 'undefined') ? new Proxy({} as SupabaseClient, {
-  get: (_, prop) => (getSupabaseAdmin() as any)[prop]
+  get: (_, prop) => {
+    const instance = getSupabaseAdmin();
+    return (instance as any)[prop];
+  }
 }) : null as unknown as SupabaseClient;
 
 /**
- * createSupabaseClient (Client Component Helper)
- * Optimized for browser environments to maintain persistent auth sessions.
- */
-export function createSupabaseClient(): SupabaseClient {
-  return createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-}
-
-/**
- * getBearerToken
  * Helper to extract JWT from Authorization header.
  */
 export function getBearerToken(headers: Headers): string | null {
@@ -97,8 +81,7 @@ export function getBearerToken(headers: Headers): string | null {
 }
 
 /**
- * requireAdmin
- * Strict server-side check for admin role.
+ * requireAdmin (Server-side check)
  */
 export async function requireAdmin(headers: Headers): Promise<{ userId: string }> {
   const token = getBearerToken(headers);
@@ -108,13 +91,11 @@ export async function requireAdmin(headers: Headers): Promise<{ userId: string }
     throw error;
   }
   
-  // Create a server client with the bearer token
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: `Bearer ${token}` } }
   });
   
   const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
   if (userError || !user) {
     const error = new Error('Unauthorized');
     (error as any).status = 401;
@@ -137,8 +118,7 @@ export async function requireAdmin(headers: Headers): Promise<{ userId: string }
 }
 
 /**
- * requireAuth
- * Simplified check for any authenticated user.
+ * requireAuth (Server-side check)
  */
 export async function requireAuth(headers: Headers): Promise<{ userId: string }> {
   const token = getBearerToken(headers);
@@ -153,7 +133,6 @@ export async function requireAuth(headers: Headers): Promise<{ userId: string }>
   });
   
   const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
   if (userError || !user) {
     const error = new Error('Unauthorized');
     (error as any).status = 401;

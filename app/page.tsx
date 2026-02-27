@@ -11,15 +11,27 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
+/**
+ * LandingPage Component
+ * Fully corrected with hydration guards and defensive logic.
+ */
 export default function LandingPage() {
   const [query, setQuery] = useState('');
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
   const [leadLoading, setLeadLoading] = useState(false);
   const [content, setContent] = useState<Record<string, SiteContent>>({});
+  const [mounted, setMounted] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // Hydration Guard
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Fetch Site Content
+  useEffect(() => {
+    if (!mounted) return;
     fetch('/api/content?section=landing')
       .then(res => res.json())
       .then((data: SiteContent[]) => {
@@ -32,8 +44,9 @@ export default function LandingPage() {
         }
       })
       .catch(err => console.error('Failed to fetch landing content:', err));
-  }, []);
+  }, [mounted]);
 
+  // Auto-scroll chat
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -115,11 +128,12 @@ export default function LandingPage() {
     }
   }
 
+  if (!mounted) return null;
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-950 text-gray-100 selection:bg-indigo-500/30 overflow-x-hidden">
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-32 pb-32">
-        {/* Background Visuals */}
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(45%_45%_at_50%_50%,rgba(79,70,229,0.1)_0%,transparent_100%)]" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-20 opacity-20 pointer-events-none">
           <svg className="w-full h-full" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
@@ -222,7 +236,6 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="w-full md:w-64 h-64 bg-gray-950/50 rounded-2xl border border-gray-800 relative overflow-hidden flex items-center justify-center shadow-inner">
-                {/* Simulated Vector Grid */}
                 <div className="absolute inset-0 grid grid-cols-6 grid-rows-6 gap-2 p-4 opacity-20">
                   {Array.from({ length: 36 }).map((_, i) => (
                     <motion.div 
@@ -240,7 +253,6 @@ export default function LandingPage() {
                     />
                   ))}
                 </div>
-                {/* Connecting Lines (Simplified SVG) */}
                 <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100">
                   <motion.path 
                     d="M 20 30 L 50 50 L 80 20 M 50 50 L 40 80 L 10 70" 
@@ -298,9 +310,7 @@ export default function LandingPage() {
           </motion.div>
         </div>
 
-        {/* Second Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-8">
-          {/* Real-time Monitor Card */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -318,7 +328,6 @@ export default function LandingPage() {
                 <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse delay-150" />
               </div>
             </div>
-            
             <div className="space-y-3 font-mono text-[10px]">
               <div className="flex justify-between p-2 rounded-lg bg-gray-950/50 border border-gray-800/50 text-indigo-400">
                 <span>> INDEXING_DOC_4282</span>
@@ -339,7 +348,6 @@ export default function LandingPage() {
             </div>
           </motion.div>
 
-          {/* AI Accuracy Gauge */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -368,7 +376,6 @@ export default function LandingPage() {
             <p className="text-xs text-gray-400">Sadece doğrulanmış kaynaklardan bilgi üretimi.</p>
           </motion.div>
 
-          {/* Security & Compliance */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -622,6 +629,10 @@ export default function LandingPage() {
   );
 }
 
+/**
+ * Sub-components
+ */
+
 function FeatureCard({ icon, title, desc, badge }: { icon: React.ReactNode, title: string, desc: string, badge?: string }) {
   return (
     <motion.div 
@@ -655,7 +666,7 @@ function PricingCard({ name, price, features, isPopular }: { name: string, price
           En Popüler
         </div>
       )}
-      <h3 className={`text-xl font-bold mb-2 ${isPopular ? 'text-white' : 'text-white'}`}>{name}</h3>
+      <h3 className="text-xl font-bold mb-2 text-white">{name}</h3>
       <div className="flex items-baseline gap-1 mb-8">
         <span className="text-4xl font-bold">₺{price}</span>
         {price !== 'Özel' && <span className="text-sm opacity-60">/ay</span>}
@@ -679,24 +690,5 @@ function PricingCard({ name, price, features, isPopular }: { name: string, price
         Planı Seç
       </Link>
     </motion.div>
-  );
-}
-
-function VisualStat({ label, value, color }: { label: string, value: number, color: string }) {
-  return (
-    <div className="space-y-2">
-      <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-gray-500">
-        <span>{label}</span>
-        <span>%{value}</span>
-      </div>
-      <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
-        <motion.div 
-          initial={{ width: 0 }}
-          whileInView={{ width: `${value}%` }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
-          className={`h-full ${color}`}
-        />
-      </div>
-    </div>
   );
 }
