@@ -107,6 +107,30 @@ export async function requireAdmin(headers: Headers): Promise<{ userId: string }
   return { userId: user.id };
 }
 
+/**
+ * requireAuth
+ * Simplified check for any authenticated user.
+ */
+export async function requireAuth(headers: Headers): Promise<{ userId: string }> {
+  const token = getBearerToken(headers);
+  if (!token) {
+    const error = new Error('Unauthorized');
+    (error as any).status = 401;
+    throw error;
+  }
+  
+  const supabase = createSupabaseClient(token);
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  
+  if (userError || !user) {
+    const error = new Error('Unauthorized');
+    (error as any).status = 401;
+    throw error;
+  }
+  
+  return { userId: user.id };
+}
+
 export function getEmbeddingModel(): string {
   return process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small';
 }
