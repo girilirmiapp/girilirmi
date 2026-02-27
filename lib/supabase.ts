@@ -5,14 +5,21 @@ import OpenAI from 'openai';
 /**
  * Ultra-Robust Environment Variable Access
  * Ensures Supabase initialization doesn't crash even if env vars are completely missing.
+ * Now works both on Server and Browser (Client-side).
  */
 function getEnv(name: string, isRequired = false): string {
   const value = process.env[name];
   
   if (!value || value.trim() === '') {
-    if (isRequired && typeof window === 'undefined') {
-      if (name.includes('URL')) return 'https://placeholder-project.supabase.co';
-      if (name.includes('KEY')) return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.static-fallback-key';
+    if (isRequired) {
+      if (name.includes('URL')) {
+        // Return a valid URL format to prevent @supabase/supabase-js from throwing
+        return 'https://placeholder-project.supabase.co';
+      }
+      if (name.includes('KEY')) {
+        // Return a valid JWT-like format to prevent validation errors
+        return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.static-fallback-key';
+      }
       return 'static-build-fallback';
     }
     return '';
@@ -20,6 +27,7 @@ function getEnv(name: string, isRequired = false): string {
   return value;
 }
 
+// Global Configs
 export const SUPABASE_URL = getEnv('NEXT_PUBLIC_SUPABASE_URL', true);
 export const SUPABASE_ANON_KEY = getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', true);
 const SUPABASE_SERVICE_ROLE_KEY = getEnv('SUPABASE_SERVICE_ROLE_KEY');
