@@ -1,0 +1,39 @@
+# Girilirmi - Full-Stack AI Platform Requirements
+
+## Core Dependencies (npm install)
+next@^14.2.10             # Next.js Framework (Security Patched)
+react@^18.3.1              # UI Library
+react-dom@^18.3.1          # UI Library (DOM)
+@supabase/supabase-js     # Supabase Client
+@supabase/ssr             # Supabase Auth for Server Components
+openai                    # OpenAI SDK (Embeddings & GPT-4o)
+googleapis                # Google Sheets Integration (Lead CRM)
+lucide-react              # UI Icons
+clsx                      # Class Name Utilities
+tailwind-merge            # Tailwind Class Merging
+
+## Development Tools
+typescript                # Static Typing
+tailwindcss               # CSS Framework
+postcss                   # CSS Processing
+autoprefixer              # CSS Vendor Prefixing
+
+## Database Requirements (Supabase SQL)
+- pgvector extension
+- pgcrypto extension
+- 'users' table (Auth + Roles)
+- 'site_content' table (Dynamic UI)
+- 'documents' table (Vector Store)
+- 'logs' table (AI Tracking)
+- 'match_documents' RPC function
+
+## Environment Variables (.env.local)
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- OPENAI_API_KEY
+- OPENAI_EMBEDDING_MODEL
+- OPENAI_CHAT_MODEL
+- GOOGLE_CLIENT_EMAIL
+- GOOGLE_PRIVATE_KEY
+- GOOGLE_SHEET_ID
