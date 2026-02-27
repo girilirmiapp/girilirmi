@@ -1,19 +1,32 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import { 
-  Send, Bot, User, Sparkles, ArrowRight, CheckCircle2, 
-  Loader2, Mail, Search, Zap, Shield, Database, 
-  BarChart3, Brain, Layers, Cpu
+  Send, 
+  Bot, 
+  User, 
+  Sparkles, 
+  ArrowRight, 
+  CheckCircle2, 
+  Loader2, 
+  Mail, 
+  Search, 
+  Zap, 
+  Shield, 
+  Database, 
+  BarChart3, 
+  Brain, 
+  Layers, 
+  Cpu 
 } from 'lucide-react';
 import type { SiteContent } from '@/lib/types';
-import { toast } from 'sonner';
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
 
 /**
  * LandingPage Component
- * Fully updated: Removed "RAG" concept, added clickable feature cards with hover effects.
+ * Fully corrected with all required imports and hydration guards.
  */
 export default function LandingPage() {
   const [query, setQuery] = useState('');
@@ -700,3 +713,4 @@ function PricingCard({ name, price, features, isPopular }: { name: string, price
     </motion.div>
   );
 }
+</toolcall_result>
