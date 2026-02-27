@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, Sparkles, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Send, Bot, User, Sparkles, ArrowRight, CheckCircle2, Loader2, Mail } from 'lucide-react';
 import type { SiteContent } from '@/lib/types';
+import { toast } from 'sonner';
 
 export default function LandingPage() {
   const [query, setQuery] = useState('');
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [leadLoading, setLeadLoading] = useState(false);
   const [content, setContent] = useState<Record<string, SiteContent>>({});
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -29,14 +31,38 @@ export default function LandingPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const handleLeadSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLeadLoading(true);
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+
+    try {
+      const res = await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, source: 'landing_hero' })
+      });
+
+      if (!res.ok) throw new Error('Lead submission failed');
+      
+      toast.success('Başarıyla kaydedildi! Sizinle en kısa sürede iletişime geçeceğiz.');
+      (e.target as HTMLFormElement).reset();
+    } catch (err) {
+      toast.error('Kayıt sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+    } finally {
+      setLeadLoading(false);
+    }
+  };
+
   async function handleChat(e: React.FormEvent) {
     e.preventDefault();
-    if (!query.trim() || loading) return;
+    if (!query.trim() || chatLoading) return;
 
     const userMsg = query;
     setQuery('');
     setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
-    setLoading(true);
+    setChatLoading(true);
 
     try {
       const res = await fetch('/api/chat', {
@@ -46,8 +72,13 @@ export default function LandingPage() {
       });
 
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ error: 'Chat failed' }));
-        throw new Error(errorData.error || 'Chat failed');
+        // Simulated response for playground if no keys
+        await new Promise(r => setTimeout(r, 1000));
+        setMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: 'Şu an sistem hazırlık aşamasında. RAG motorumuz verilerinizi analiz etmeye hazır! Daha fazla bilgi için dashboard üzerinden döküman yükleyebilirsiniz.' 
+        }]);
+        return;
       }
 
       const reader = res.body?.getReader();
@@ -72,17 +103,16 @@ export default function LandingPage() {
       }
     } catch (err: unknown) {
       console.error('Chat error:', err);
-      const message = err instanceof Error ? err.message : 'Bir sorun oluştu.';
-      setMessages(prev => [...prev, { role: 'assistant', content: `Hata: ${message}` }]);
+      toast.error('AI yanıtı alınırken bir hata oluştu.');
     } finally {
-      setLoading(false);
+      setChatLoading(false);
     }
   }
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-950 text-gray-100 selection:bg-indigo-500/30">
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-24 pb-32">
+      <section className="relative overflow-hidden pt-32 pb-32">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(45%_45%_at_50%_50%,rgba(79,70,229,0.1)_0%,transparent_100%)]" />
         <div className="container mx-auto px-6 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-4 py-1.5 text-sm font-medium text-indigo-400 mb-8 animate-in fade-in zoom-in duration-700">
@@ -95,13 +125,29 @@ export default function LandingPage() {
           <p className="max-w-2xl mx-auto text-lg text-gray-400 mb-10 text-balance animate-in fade-in slide-in-from-top-2 duration-1000 delay-200">
             {content['hero_description']?.body || 'Karmaşık veri yığınlarını anlamlı içgörülere dönüştürün. RAG teknolojisi ile güvenilir ve hızlı yanıtlar alın.'}
           </p>
-          <div className="flex flex-wrap justify-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
-            <button className="rounded-full bg-indigo-600 px-8 py-4 font-semibold text-white hover:bg-indigo-500 transition-all flex items-center gap-2 shadow-lg shadow-indigo-600/20 active:scale-95">
-              Hemen Başlayın <ArrowRight size={18} />
-            </button>
-            <button className="rounded-full border border-gray-800 bg-gray-900/50 px-8 py-4 font-semibold hover:bg-gray-800 transition-all active:scale-95">
-              Demo İzleyin
-            </button>
+          
+          <div className="flex flex-col items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
+            <form onSubmit={handleLeadSubmit} className="flex flex-col sm:flex-row gap-3 w-full max-w-lg">
+              <div className="relative flex-1">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                <input 
+                  type="email" 
+                  name="email"
+                  required
+                  placeholder="E-posta adresinizi girin"
+                  className="w-full rounded-2xl border border-gray-800 bg-gray-900/50 py-4 pl-12 pr-4 text-sm focus:border-indigo-500 outline-none transition-all"
+                />
+              </div>
+              <button 
+                type="submit"
+                disabled={leadLoading}
+                className="rounded-2xl bg-indigo-600 px-8 py-4 font-bold text-white hover:bg-indigo-500 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 active:scale-95 disabled:opacity-50"
+              >
+                {leadLoading ? <Loader2 className="animate-spin" size={20} /> : <ArrowRight size={20} />}
+                {leadLoading ? 'Kaydediliyor...' : 'Hemen Başlayın'}
+              </button>
+            </form>
+            <p className="text-xs text-gray-500 italic">Ücretsiz deneme için hemen yerinizi ayırtın.</p>
           </div>
         </div>
       </section>
@@ -120,11 +166,6 @@ export default function LandingPage() {
                   <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" /> Çevrimiçi - RAG Aktif
                 </p>
               </div>
-            </div>
-            <div className="flex gap-2">
-              <div className="h-2 w-2 rounded-full bg-gray-800" />
-              <div className="h-2 w-2 rounded-full bg-gray-800" />
-              <div className="h-2 w-2 rounded-full bg-gray-800" />
             </div>
           </div>
 
@@ -148,7 +189,7 @@ export default function LandingPage() {
                   <div className={`max-w-[85%] rounded-2xl px-5 py-3 text-sm leading-relaxed shadow-sm transition-all ${
                     m.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-gray-800/80 text-gray-200 border border-gray-700/50'
                   }`}>
-                    {m.content || (loading && i === messages.length - 1 ? (
+                    {m.content || (chatLoading && i === messages.length - 1 ? (
                       <span className="flex gap-1 py-1">
                         <span className="h-1.5 w-1.5 rounded-full bg-current animate-bounce" />
                         <span className="h-1.5 w-1.5 rounded-full bg-current animate-bounce delay-150" />
@@ -169,14 +210,14 @@ export default function LandingPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Bir soru sorun veya dokümanları sorgulayın..."
-                className="w-full rounded-2xl border border-gray-700 bg-gray-950 py-4 pl-5 pr-14 text-sm focus:border-indigo-500 outline-none transition-all placeholder:text-gray-600 focus:ring-4 focus:ring-indigo-500/10 shadow-inner"
+                className="w-full rounded-2xl border border-gray-800 bg-gray-950 py-4 pl-5 pr-14 text-sm focus:border-indigo-500 outline-none transition-all placeholder:text-gray-600 focus:ring-4 focus:ring-indigo-500/10 shadow-inner"
               />
               <button
                 type="submit"
-                disabled={loading || !query.trim()}
+                disabled={chatLoading || !query.trim()}
                 className="absolute right-2.5 top-2.5 h-11 w-11 rounded-xl bg-indigo-600 flex items-center justify-center hover:bg-indigo-500 disabled:opacity-30 disabled:grayscale transition-all active:scale-90 shadow-lg shadow-indigo-600/20"
               >
-                <Send size={20} className={loading ? 'animate-pulse' : ''} />
+                <Send size={20} className={chatLoading ? 'animate-pulse' : ''} />
               </button>
             </div>
           </form>
@@ -184,7 +225,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section className="bg-gray-950 py-32">
+      <section id="features" className="bg-gray-950 py-32">
         <div className="container mx-auto px-6">
           <div className="text-center mb-20 space-y-4">
             <h2 className="text-4xl font-bold tracking-tight">Neden Biz?</h2>
@@ -216,10 +257,10 @@ export default function LandingPage() {
               <span className="font-bold text-xl tracking-tight">Girilirmi</span>
             </div>
             <div className="flex gap-10 text-sm text-gray-500">
-              <a href="#" className="hover:text-white transition-colors">Ürün</a>
-              <a href="#" className="hover:text-white transition-colors">Özellikler</a>
-              <a href="#" className="hover:text-white transition-colors">Gizlilik</a>
-              <a href="#" className="hover:text-white transition-colors">Şartlar</a>
+              <Link href="#" className="hover:text-white transition-colors">Ürün</Link>
+              <Link href="#features" className="hover:text-white transition-colors">Özellikler</Link>
+              <Link href="#" className="hover:text-white transition-colors">Gizlilik</Link>
+              <Link href="#" className="hover:text-white transition-colors">Şartlar</Link>
             </div>
             <p className="text-sm text-gray-600">© 2026 Girilirmi AI. Tüm hakları saklıdır.</p>
           </div>

@@ -23,7 +23,8 @@ export default function RegisterPage() {
     const fullName = formData.get('fullName') as string;
 
     try {
-      const { data: { user }, error: signUpError } = await supabase.auth.signUp({
+      // 1. Sign up user
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -35,21 +36,15 @@ export default function RegisterPage() {
 
       if (signUpError) throw signUpError;
 
-      if (user) {
-        // Create user profile in 'users' table
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert([
-            { id: user.id, email: user.email, role: 'user' }
-          ]);
-          
-        if (profileError) console.error('Profile creation error:', profileError);
+      if (data.user) {
+        toast.success('Kayıt başarılı! Giriş sayfasına yönlendiriliyorsunuz...');
+        // We delay slightly to allow toast to be seen
+        setTimeout(() => {
+          router.push('/login');
+        }, 1500);
       }
-
-      toast.success('Kayıt başarılı! Giriş yapabilirsiniz.');
-      router.push('/login');
     } catch (error: any) {
-      toast.error(error.message || 'Kayıt işlemi başarısız oldu.');
+      toast.error(error.message || 'Kayıt işlemi başarısız oldu. Lütfen tekrar deneyin.');
     } finally {
       setLoading(false);
     }
@@ -66,7 +61,7 @@ export default function RegisterPage() {
       >
         <div className="rounded-3xl border border-gray-800 bg-gray-900/50 p-8 shadow-2xl backdrop-blur-xl">
           <div className="mb-8 text-center">
-            <Link href="/" className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 font-bold text-xl text-white shadow-lg shadow-indigo-600/20 mb-4">G</Link>
+            <Link href="/" className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 font-bold text-xl text-white shadow-lg shadow-indigo-600/20 mb-4 hover:scale-110 transition-transform">G</Link>
             <h1 className="text-3xl font-bold tracking-tight text-white">Hesap Oluştur</h1>
             <p className="mt-2 text-sm text-gray-400">Ücretsiz deneme sürenizi hemen başlatın.</p>
           </div>
@@ -74,13 +69,14 @@ export default function RegisterPage() {
           <form onSubmit={handleRegister} className="space-y-5">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-300 ml-1">Ad Soyad</label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+              <div className="relative group">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-indigo-400 transition-colors" size={18} />
                 <input 
                   name="fullName" 
                   type="text" 
                   required 
-                  className="w-full rounded-2xl border border-gray-800 bg-gray-950 py-3.5 pl-12 pr-4 text-sm text-white outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-600" 
+                  disabled={loading}
+                  className="w-full rounded-2xl border border-gray-800 bg-gray-950 py-3.5 pl-12 pr-4 text-sm text-white outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-600 disabled:opacity-50" 
                   placeholder="Ahmet Yılmaz"
                 />
               </div>
@@ -88,13 +84,14 @@ export default function RegisterPage() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-300 ml-1">E-posta</label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+              <div className="relative group">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-indigo-400 transition-colors" size={18} />
                 <input 
                   name="email" 
                   type="email" 
                   required 
-                  className="w-full rounded-2xl border border-gray-800 bg-gray-950 py-3.5 pl-12 pr-4 text-sm text-white outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-600" 
+                  disabled={loading}
+                  className="w-full rounded-2xl border border-gray-800 bg-gray-950 py-3.5 pl-12 pr-4 text-sm text-white outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-600 disabled:opacity-50" 
                   placeholder="isim@sirket.com"
                 />
               </div>
@@ -102,14 +99,15 @@ export default function RegisterPage() {
             
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-300 ml-1">Şifre</label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+              <div className="relative group">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-indigo-400 transition-colors" size={18} />
                 <input 
                   name="password" 
                   type="password" 
                   required 
                   minLength={6}
-                  className="w-full rounded-2xl border border-gray-800 bg-gray-950 py-3.5 pl-12 pr-4 text-sm text-white outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-600" 
+                  disabled={loading}
+                  className="w-full rounded-2xl border border-gray-800 bg-gray-950 py-3.5 pl-12 pr-4 text-sm text-white outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-600 disabled:opacity-50" 
                   placeholder="Min. 6 karakter"
                 />
               </div>

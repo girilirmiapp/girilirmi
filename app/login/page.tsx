@@ -22,18 +22,20 @@ export default function LoginPage() {
     const password = formData.get('password') as string;
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
 
-      toast.success('Başarıyla giriş yapıldı!');
-      router.push('/dashboard');
-      router.refresh();
+      if (data.session) {
+        toast.success('Başarıyla giriş yapıldı! Dashboard\'a yönlendiriliyorsunuz...');
+        router.push('/dashboard');
+        router.refresh();
+      }
     } catch (error: any) {
-      toast.error(error.message || 'Giriş başarısız oldu.');
+      toast.error(error.message || 'Giriş başarısız oldu. Lütfen bilgilerinizi kontrol edin.');
     } finally {
       setLoading(false);
     }
@@ -50,7 +52,7 @@ export default function LoginPage() {
       >
         <div className="rounded-3xl border border-gray-800 bg-gray-900/50 p-8 shadow-2xl backdrop-blur-xl">
           <div className="mb-8 text-center">
-            <Link href="/" className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 font-bold text-xl text-white shadow-lg shadow-indigo-600/20 mb-4">G</Link>
+            <Link href="/" className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 font-bold text-xl text-white shadow-lg shadow-indigo-600/20 mb-4 hover:scale-110 transition-transform">G</Link>
             <h1 className="text-3xl font-bold tracking-tight text-white">Tekrar Hoşgeldiniz</h1>
             <p className="mt-2 text-sm text-gray-400">Hesabınıza giriş yaparak devam edin.</p>
           </div>
@@ -58,13 +60,14 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-300 ml-1">E-posta</label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+              <div className="relative group">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-indigo-400 transition-colors" size={18} />
                 <input 
                   name="email" 
                   type="email" 
                   required 
-                  className="w-full rounded-2xl border border-gray-800 bg-gray-950 py-3.5 pl-12 pr-4 text-sm text-white outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-600" 
+                  disabled={loading}
+                  className="w-full rounded-2xl border border-gray-800 bg-gray-950 py-3.5 pl-12 pr-4 text-sm text-white outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-600 disabled:opacity-50" 
                   placeholder="isim@sirket.com"
                 />
               </div>
@@ -75,13 +78,14 @@ export default function LoginPage() {
                 <label className="text-sm font-medium text-gray-300">Şifre</label>
                 <Link href="#" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">Şifremi Unuttum</Link>
               </div>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+              <div className="relative group">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-indigo-400 transition-colors" size={18} />
                 <input 
                   name="password" 
                   type="password" 
                   required 
-                  className="w-full rounded-2xl border border-gray-800 bg-gray-950 py-3.5 pl-12 pr-4 text-sm text-white outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-600" 
+                  disabled={loading}
+                  className="w-full rounded-2xl border border-gray-800 bg-gray-950 py-3.5 pl-12 pr-4 text-sm text-white outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-600 disabled:opacity-50" 
                   placeholder="••••••••"
                 />
               </div>

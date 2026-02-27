@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { 
   LayoutDashboard, LogOut, User, 
   Settings, HelpCircle, Menu, X, 
-  ChevronDown, Bell, Search, Sparkles
+  ChevronDown, Bell, Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -34,6 +34,7 @@ export default function Navbar() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      router.refresh(); // Refresh to update server-side components if any
     });
 
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -43,13 +44,21 @@ export default function Navbar() {
       subscription.unsubscribe();
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [supabase.auth]);
+  }, [supabase.auth, router]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast.success('Başarıyla çıkış yapıldı.');
-    router.push('/');
-    router.refresh();
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast.success('Başarıyla çıkış yapıldı.');
+      setUser(null);
+      setIsUserMenuOpen(false);
+      router.push('/');
+      router.refresh();
+    } catch (error: any) {
+      toast.error('Çıkış yapılırken bir hata oluştu.');
+    }
   };
 
   const isAuthPage = pathname === '/login' || pathname === '/register';
