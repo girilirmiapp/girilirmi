@@ -18,8 +18,8 @@ function getEnv(name: string, isRequired = false): string {
   return value;
 }
 
-const SUPABASE_URL = getEnv('NEXT_PUBLIC_SUPABASE_URL', true);
-const SUPABASE_ANON_KEY = getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', true);
+export const SUPABASE_URL = getEnv('NEXT_PUBLIC_SUPABASE_URL', true);
+export const SUPABASE_ANON_KEY = getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', true);
 const SUPABASE_SERVICE_ROLE_KEY = getEnv('SUPABASE_SERVICE_ROLE_KEY');
 const OPENAI_API_KEY = getEnv('OPENAI_API_KEY');
 
@@ -73,7 +73,6 @@ export function getBearerToken(headers: Headers): string | null {
 /**
  * requireAdmin
  * Strict server-side check for admin role.
- * Throws 401/403 errors compatible with Next.js route handling.
  */
 export async function requireAdmin(headers: Headers): Promise<{ userId: string }> {
   const token = getBearerToken(headers);
