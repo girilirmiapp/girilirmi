@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 /**
  * LandingPage Component
- * Fully corrected with hydration guards and defensive logic.
+ * Fully updated: Removed "RAG" concept, added clickable feature cards with hover effects.
  */
 export default function LandingPage() {
   const [query, setQuery] = useState('');
@@ -95,7 +95,7 @@ export default function LandingPage() {
         await new Promise(r => setTimeout(r, 1000));
         setMessages(prev => [...prev, { 
           role: 'assistant', 
-          content: 'Şu an sistem hazırlık aşamasında. RAG motorumuz verilerinizi analiz etmeye hazır! Daha fazla bilgi için dashboard üzerinden döküman yükleyebilirsiniz.' 
+          content: 'Şu an sistem hazırlık aşamasında. AI motorumuz verilerinizi analiz etmeye hazır! Daha fazla bilgi için dashboard üzerinden döküman yükleyebilirsiniz.' 
         }]);
         return;
       }
@@ -171,7 +171,7 @@ export default function LandingPage() {
             transition={{ delay: 0.2 }}
             className="max-w-2xl mx-auto text-lg text-gray-400 mb-10 text-balance"
           >
-            {content['hero_description']?.body || 'Karmaşık veri yığınlarını anlamlı içgörülere dönüştürün. RAG teknolojisi ile güvenilir ve hızlı yanıtlar alın.'}
+            {content['hero_description']?.body || 'Karmaşık veri yığınlarını anlamlı içgörülere dönüştürün. Gelişmiş AI teknolojisi ile güvenilir ve hızlı yanıtlar alın.'}
           </motion.p>
           
           <motion.div 
@@ -286,7 +286,7 @@ export default function LandingPage() {
               </div>
               <h3 className="text-xl font-bold text-white">Ultra Hızlı İşleme</h3>
               <p className="text-gray-400 text-sm">
-                Büyük veri setlerini anında indeksleyin. RAG motorumuz sorgularınıza ortalama 1.2 saniyede yanıt verir.
+                Büyük veri setlerini anında indeksleyin. AI motorumuz sorgularınıza ortalama 1.2 saniyede yanıt verir.
               </p>
             </div>
             <div className="mt-8 pt-8 border-t border-gray-800/50">
@@ -372,7 +372,7 @@ export default function LandingPage() {
                 <span className="text-[8px] font-bold text-gray-500 uppercase">Doğruluk</span>
               </div>
             </div>
-            <h3 className="font-bold text-white mb-2">Halüsinasyon Engelleme</h3>
+            <h3 className="font-bold text-white mb-2">Güvenilir İçerik Üretimi</h3>
             <p className="text-xs text-gray-400">Sadece doğrulanmış kaynaklardan bilgi üretimi.</p>
           </motion.div>
 
@@ -444,8 +444,8 @@ export default function LandingPage() {
             />
             <FeatureCard 
               icon={<Cpu className="text-rose-400" />}
-              title="Hibrit Motor" 
-              desc="Hem vektör tabanlı hem de geleneksel arama yöntemlerini birleştiren hibrit RAG."
+              title="Hibrit Arama" 
+              desc="Hem vektör tabanlı hem de geleneksel arama yöntemlerini birleştiren hibrit motor."
               badge="Pro"
             />
             <FeatureCard 
@@ -465,8 +465,8 @@ export default function LandingPage() {
             />
             <FeatureCard 
               icon={<Brain className="text-green-400" />}
-              title="Sıfır Halüsinasyon" 
-              desc="Sadece sizin verilerinizden beslenen, uydurma bilgi üretmeyen güvenli AI."
+              title="Akıllı Asistan" 
+              desc="Verilerinizden beslenen, her an yardıma hazır akıllı yapay zeka asistanı."
             />
             <FeatureCard 
               icon={<Sparkles className="text-yellow-400" />}
@@ -490,7 +490,7 @@ export default function LandingPage() {
             <PricingCard 
               name="Başlangıç" 
               price="0" 
-              features={["5 Doküman", "100 Sorgu / Ay", "Standart Destek", "Temel RAG Motoru"]}
+              features={["5 Doküman", "100 Sorgu / Ay", "Standart Destek", "Temel AI Motoru"]}
             />
             <PricingCard 
               name="Profesyonel" 
@@ -523,7 +523,7 @@ export default function LandingPage() {
               <div>
                 <h3 className="font-semibold text-sm">Bilgi Asistanı</h3>
                 <p className="text-[10px] text-green-500 flex items-center gap-1.5 font-bold uppercase tracking-wider">
-                  <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" /> Çevrimiçi - RAG Aktif
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" /> Çevrimiçi - AI Aktif
                 </p>
               </div>
             </div>
@@ -635,21 +635,29 @@ export default function LandingPage() {
 
 function FeatureCard({ icon, title, desc, badge }: { icon: React.ReactNode, title: string, desc: string, badge?: string }) {
   return (
-    <motion.div 
-      whileHover={{ y: -5 }}
-      className="group rounded-3xl border border-gray-800 bg-gray-900/20 p-8 hover:border-indigo-500/50 hover:bg-indigo-500/[0.02] transition-all duration-500 relative overflow-hidden"
-    >
-      {badge && (
-        <div className="absolute top-4 right-4 px-2 py-0.5 rounded-full bg-indigo-600/20 border border-indigo-500/30 text-[10px] font-bold text-indigo-400 uppercase tracking-widest">
-          {badge}
+    <Link href="/dashboard" className="block group">
+      <motion.div 
+        whileHover={{ y: -8, scale: 1.02 }}
+        className="h-full rounded-3xl border border-gray-800 bg-gray-900/20 p-8 hover:border-indigo-500/50 hover:bg-indigo-500/[0.05] transition-all duration-300 relative overflow-hidden cursor-pointer"
+      >
+        {badge && (
+          <div className="absolute top-4 right-4 px-2 py-0.5 rounded-full bg-indigo-600/20 border border-indigo-500/30 text-[10px] font-bold text-indigo-400 uppercase tracking-widest">
+            {badge}
+          </div>
+        )}
+        <div className="h-12 w-12 rounded-2xl bg-gray-950 flex items-center justify-center mb-6 border border-gray-800 group-hover:bg-indigo-600/10 group-hover:border-indigo-500/30 transition-all">
+          {icon}
         </div>
-      )}
-      <div className="h-12 w-12 rounded-2xl bg-gray-950 flex items-center justify-center mb-6 border border-gray-800 group-hover:bg-indigo-600/10 group-hover:border-indigo-500/30 transition-all">
-        {icon}
-      </div>
-      <h3 className="text-xl font-bold mb-3 group-hover:text-white transition-colors">{title}</h3>
-      <p className="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300 transition-colors">{desc}</p>
-    </motion.div>
+        <h3 className="text-xl font-bold mb-3 group-hover:text-white transition-colors">{title}</h3>
+        <p className="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300 transition-colors">{desc}</p>
+        
+        {/* Click indicator */}
+        <div className="mt-6 flex items-center gap-2 text-xs font-bold text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">
+          <span>Hemen Deneyin</span>
+          <ArrowRight size={14} />
+        </div>
+      </motion.div>
+    </Link>
   );
 }
 
