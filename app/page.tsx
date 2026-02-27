@@ -343,19 +343,19 @@ export default function LandingPage() {
             </div>
             <div className="space-y-3 font-mono text-[10px]">
               <div className="flex justify-between p-2 rounded-lg bg-gray-950/50 border border-gray-800/50 text-indigo-400">
-                <span>> INDEXING_DOC_4282</span>
+                <span>{'>'} INDEXING_DOC_4282</span>
                 <span>OK</span>
               </div>
               <div className="flex justify-between p-2 rounded-lg bg-gray-950/50 border border-gray-800/50 text-emerald-400">
-                <span>> QUERY_SEARCH_SEMANTIC</span>
+                <span>{'>'} QUERY_SEARCH_SEMANTIC</span>
                 <span>124ms</span>
               </div>
               <div className="flex justify-between p-2 rounded-lg bg-gray-950/50 border border-gray-800/50 text-gray-500">
-                <span>> CACHE_HIT_RATIO</span>
+                <span>{'>'} CACHE_HIT_RATIO</span>
                 <span>94.2%</span>
               </div>
               <div className="flex justify-between p-2 rounded-lg bg-gray-950/50 border border-gray-800/50 text-blue-400">
-                <span>> EMBEDDING_GEN_v3</span>
+                <span>{'>'} EMBEDDING_GEN_v3</span>
                 <span>DONE</span>
               </div>
             </div>
