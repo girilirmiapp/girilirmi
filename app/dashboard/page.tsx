@@ -40,11 +40,20 @@ const storageData = [
 ];
 
 export default function DashboardPage() {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setIsLoaded(true);
+    setMounted(true);
   }, []);
+
+  // Prevent hydration errors by not rendering charts on the server
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gray-950 pt-24 pb-12 px-6 lg:px-12 flex items-center justify-center">
+        <div className="h-12 w-12 rounded-full border-4 border-t-indigo-500 border-gray-800 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 pt-24 pb-12 px-6 lg:px-12">
@@ -114,7 +123,7 @@ export default function DashboardPage() {
           {/* Main Chart - Area */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
+            animate={{ opacity: 1, y: 0 }}
             className="lg:col-span-2 rounded-3xl border border-gray-800 bg-gray-900/30 p-8 backdrop-blur-sm"
           >
             <div className="flex items-center justify-between mb-8">
@@ -155,7 +164,7 @@ export default function DashboardPage() {
           {/* Side Chart - Pie */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
+            animate={{ opacity: 1, y: 0 }}
             className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8 backdrop-blur-sm"
           >
             <h3 className="text-xl font-bold text-white mb-2">Veri Kaynakları</h3>
@@ -196,7 +205,7 @@ export default function DashboardPage() {
           {/* Accuracy Chart - Bar */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
+            animate={{ opacity: 1, y: 0 }}
             className="lg:col-span-3 rounded-3xl border border-gray-800 bg-gray-900/30 p-8 backdrop-blur-sm"
           >
             <div className="flex items-center justify-between mb-8">
@@ -233,7 +242,7 @@ export default function DashboardPage() {
         {/* Recent Activity Table */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
+          animate={{ opacity: 1, y: 0 }}
           className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8 backdrop-blur-sm"
         >
           <div className="flex items-center justify-between mb-8">
