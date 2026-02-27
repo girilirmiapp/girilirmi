@@ -1,3 +1,4 @@
+import { createBrowserClient } from '@supabase/ssr';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 
@@ -8,18 +9,10 @@ import OpenAI from 'openai';
 function getEnv(name: string, isRequired = false): string {
   const value = process.env[name];
   
-  // If the value is truly missing or empty
   if (!value || value.trim() === '') {
-    // During build/static analysis or in browser without env vars
-    if (isRequired) {
-      if (name.includes('URL')) {
-        // Must be a valid URL format for Supabase to not throw "supabaseUrl is required"
-        return 'https://placeholder-project.supabase.co';
-      }
-      if (name.includes('KEY')) {
-        // Must be a valid JWT-like format for Supabase to not throw during validation
-        return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.static-fallback-key';
-      }
+    if (isRequired && typeof window === 'undefined') {
+      if (name.includes('URL')) return 'https://placeholder-project.supabase.co';
+      if (name.includes('KEY')) return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.static-fallback-key';
       return 'static-build-fallback';
     }
     return '';
@@ -27,37 +20,34 @@ function getEnv(name: string, isRequired = false): string {
   return value;
 }
 
-// Global Configs
 export const SUPABASE_URL = getEnv('NEXT_PUBLIC_SUPABASE_URL', true);
 export const SUPABASE_ANON_KEY = getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', true);
 const SUPABASE_SERVICE_ROLE_KEY = getEnv('SUPABASE_SERVICE_ROLE_KEY');
 const OPENAI_API_KEY = getEnv('OPENAI_API_KEY');
 
 /**
- * OpenAI Instance (Server-only)
+ * OpenAI Instance (Server-only lazy getter)
  */
 let _openai: OpenAI | null = null;
 export const getOpenAI = () => {
-  if (typeof window !== 'undefined') return null;
+  if (typeof window !== 'undefined') throw new Error('OpenAI client cannot be used in the browser');
   if (!_openai) {
     _openai = new OpenAI({ apiKey: OPENAI_API_KEY || 'no-key-provided' });
   }
   return _openai;
 };
 
+// Exporting proxy to maintain backward compatibility in API routes
 export const openai = (typeof window === 'undefined') ? new Proxy({} as OpenAI, {
-  get: (_, prop) => {
-    const instance = getOpenAI();
-    return instance ? (instance as any)[prop] : undefined;
-  }
+  get: (_, prop) => (getOpenAI() as any)[prop]
 }) : null as unknown as OpenAI;
 
 /**
- * Admin Supabase Client (Server-only)
+ * Admin Supabase Client (Server-only lazy getter)
  */
 let _supabaseAdmin: SupabaseClient | null = null;
 export const getSupabaseAdmin = () => {
-  if (typeof window !== 'undefined') return null;
+  if (typeof window !== 'undefined') throw new Error('Supabase Admin client cannot be used in the browser');
   if (!_supabaseAdmin) {
     _supabaseAdmin = createClient(
       SUPABASE_URL,
@@ -73,40 +63,17 @@ export const getSupabaseAdmin = () => {
   return _supabaseAdmin;
 };
 
+// Proxy for backward compatibility
 export const supabaseAdmin = (typeof window === 'undefined') ? new Proxy({} as SupabaseClient, {
-  get: (_, prop) => {
-    const instance = getSupabaseAdmin();
-    return instance ? (instance as any)[prop] : undefined;
-  }
+  get: (_, prop) => (getSupabaseAdmin() as any)[prop]
 }) : null as unknown as SupabaseClient;
 
 /**
- * createSupabaseClient
- * Main entry point for Supabase client creation.
- * It is now wrapped in a try-catch and returns a safe placeholder if it fails.
+ * createSupabaseClient (Client Component Helper)
+ * Optimized for browser environments to maintain persistent auth sessions.
  */
-export function createSupabaseClient(token?: string | null): SupabaseClient {
-  try {
-    const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    
-    // Ensure we never pass an empty string to createClient
-    const url = SUPABASE_URL && SUPABASE_URL.startsWith('http') ? SUPABASE_URL : 'https://placeholder.supabase.co';
-    const key = SUPABASE_ANON_KEY && SUPABASE_ANON_KEY.length > 20 ? SUPABASE_ANON_KEY : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
-
-    return createClient(url, key, {
-      global: { headers },
-      auth: { 
-        autoRefreshToken: typeof window !== 'undefined', 
-        persistSession: typeof window !== 'undefined',
-        detectSessionInUrl: typeof window !== 'undefined'
-      }
-    });
-  } catch (error) {
-    console.error('[Supabase Client] Failed to initialize:', error);
-    // Return a dummy client to prevent the entire React app from crashing
-    return createClient('https://placeholder.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder');
-  }
+export function createSupabaseClient(): SupabaseClient {
+  return createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
 /**
@@ -133,7 +100,11 @@ export async function requireAdmin(headers: Headers): Promise<{ userId: string }
     throw error;
   }
   
-  const supabase = createSupabaseClient(token);
+  // Create a server client with the bearer token
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: `Bearer ${token}` } }
+  });
+  
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   
   if (userError || !user) {
@@ -142,12 +113,7 @@ export async function requireAdmin(headers: Headers): Promise<{ userId: string }
     throw error;
   }
   
-  const adminClient = getSupabaseAdmin();
-  if (!adminClient) {
-    throw new Error('Admin client not available on client-side');
-  }
-
-  const { data: profile, error: profileError } = await adminClient
+  const { data: profile, error: profileError } = await getSupabaseAdmin()
     .from('users')
     .select('role')
     .eq('id', user.id)
@@ -174,7 +140,10 @@ export async function requireAuth(headers: Headers): Promise<{ userId: string }>
     throw error;
   }
   
-  const supabase = createSupabaseClient(token);
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: `Bearer ${token}` } }
+  });
+  
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   
   if (userError || !user) {

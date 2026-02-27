@@ -61,7 +61,7 @@ export async function middleware(request: NextRequest) {
 
   const url = request.nextUrl.clone();
 
-  // Dashboard protection
+  // Protected routes check
   if (url.pathname.startsWith('/dashboard') || url.pathname.startsWith('/playground')) {
     if (!session) {
       url.pathname = '/login';
@@ -69,7 +69,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Auth pages protection (redirect to dashboard if already logged in)
+  // Auth pages check (redirect to dashboard if already logged in)
   if (url.pathname === '/login' || url.pathname === '/register') {
     if (session) {
       url.pathname = '/dashboard';

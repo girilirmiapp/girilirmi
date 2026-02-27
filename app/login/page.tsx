@@ -11,12 +11,13 @@ import { motion } from 'framer-motion';
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const [supabase] = useState(() => createSupabaseClient());
+  const supabase = createSupabaseClient();
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    if (loading) return;
     
+    setLoading(true);
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
@@ -30,12 +31,15 @@ export default function LoginPage() {
       if (error) throw error;
 
       if (data.session) {
-        toast.success('Başarıyla giriş yapıldı! Dashboard\'a yönlendiriliyorsunuz...');
+        toast.success('Başarıyla giriş yapıldı!');
         router.push('/dashboard');
         router.refresh();
+      } else {
+        throw new Error('Oturum açılamadı. Lütfen bilgilerinizi kontrol edin.');
       }
     } catch (error: any) {
-      toast.error(error.message || 'Giriş başarısız oldu. Lütfen bilgilerinizi kontrol edin.');
+      console.error('Login error:', error);
+      toast.error(error.message || 'Giriş başarısız oldu. Lütfen tekrar deneyin.');
     } finally {
       setLoading(false);
     }

@@ -11,12 +11,13 @@ import { motion } from 'framer-motion';
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const [supabase] = useState(() => createSupabaseClient());
+  const supabase = createSupabaseClient();
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (loading) return;
+
     setLoading(true);
-    
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
@@ -31,19 +32,26 @@ export default function RegisterPage() {
           data: {
             full_name: fullName,
           },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
       if (signUpError) throw signUpError;
 
       if (data.user) {
-        toast.success('Kayıt başarılı! Giriş sayfasına yönlendiriliyorsunuz...');
-        // We delay slightly to allow toast to be seen
-        setTimeout(() => {
+        toast.success('Kayıt başarılı! Lütfen e-posta adresinizi doğrulayın veya giriş yapın.');
+        
+        // Some Supabase configs auto-login after signup, others don't.
+        // We'll redirect to login to be safe, unless a session was automatically created.
+        if (data.session) {
+          router.push('/dashboard');
+        } else {
           router.push('/login');
-        }, 1500);
+        }
+        router.refresh();
       }
     } catch (error: any) {
+      console.error('Registration error:', error);
       toast.error(error.message || 'Kayıt işlemi başarısız oldu. Lütfen tekrar deneyin.');
     } finally {
       setLoading(false);
