@@ -713,4 +713,3 @@ function PricingCard({ name, price, features, isPopular }: { name: string, price
     </motion.div>
   );
 }
-</toolcall_result>
