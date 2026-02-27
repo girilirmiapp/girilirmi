@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, Sparkles, ArrowRight, CheckCircle2, Loader2, Mail } from 'lucide-react';
 import type { SiteContent } from '@/lib/types';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 export default function LandingPage() {
   const [query, setQuery] = useState('');
@@ -18,11 +19,13 @@ export default function LandingPage() {
     fetch('/api/content?section=landing')
       .then(res => res.json())
       .then((data: SiteContent[]) => {
-        const contentMap = data.reduce((acc: Record<string, SiteContent>, item: SiteContent) => {
-          acc[item.key] = item;
-          return acc;
-        }, {});
-        setContent(contentMap);
+        if (Array.isArray(data)) {
+          const contentMap = data.reduce((acc: Record<string, SiteContent>, item: SiteContent) => {
+            acc[item.key] = item;
+            return acc;
+          }, {});
+          setContent(contentMap);
+        }
       })
       .catch(err => console.error('Failed to fetch landing content:', err));
   }, []);
@@ -257,10 +260,10 @@ export default function LandingPage() {
               <span className="font-bold text-xl tracking-tight">Girilirmi</span>
             </div>
             <div className="flex gap-10 text-sm text-gray-500">
-              <Link href="#" className="hover:text-white transition-colors">Ürün</Link>
+              <Link href="/" className="hover:text-white transition-colors">Ürün</Link>
               <Link href="#features" className="hover:text-white transition-colors">Özellikler</Link>
-              <Link href="#" className="hover:text-white transition-colors">Gizlilik</Link>
-              <Link href="#" className="hover:text-white transition-colors">Şartlar</Link>
+              <Link href="/privacy" className="hover:text-white transition-colors">Gizlilik</Link>
+              <Link href="/terms" className="hover:text-white transition-colors">Şartlar</Link>
             </div>
             <p className="text-sm text-gray-600">© 2026 Girilirmi AI. Tüm hakları saklıdır.</p>
           </div>
