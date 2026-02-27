@@ -103,49 +103,139 @@ function OverviewView() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 rounded-3xl border border-gray-800 bg-gray-900/30 p-8">
-          <h3 className="text-xl font-bold text-white mb-8">Analiz Trafiği</h3>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={queryData}>
-                <defs>
-                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
-                <XAxis dataKey="name" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px' }} />
-                <Area type="monotone" dataKey="value" stroke="#4f46e5" strokeWidth={3} fill="url(#colorValue)" />
-              </AreaChart>
-            </ResponsiveContainer>
+        <div className="lg:col-span-2 space-y-8">
+          <div className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-xl font-bold text-white">Analiz Trafiği</h3>
+              <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
+                <span className="h-2 w-2 rounded-full bg-indigo-500" />
+                Sorgu Sayısı
+              </div>
+            </div>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={queryData}>
+                  <defs>
+                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
+                  <XAxis dataKey="name" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px' }} />
+                  <Area type="monotone" dataKey="value" stroke="#4f46e5" strokeWidth={3} fill="url(#colorValue)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8">
+              <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                <Activity size={20} className="text-emerald-400" />
+                Sistem Kaynakları
+              </h3>
+              <div className="space-y-6">
+                <ProgressStat label="CPU Kullanımı" value={24} color="bg-emerald-500" />
+                <ProgressStat label="RAM Kullanımı" value={68} color="bg-indigo-500" />
+                <ProgressStat label="Depolama" value={42} color="bg-amber-500" />
+              </div>
+            </div>
+            <div className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8">
+              <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                <ShieldCheck size={20} className="text-blue-400" />
+                Güvenlik Özeti
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-gray-950/50 border border-gray-800/50">
+                  <span className="text-xs text-gray-400">SSL Durumu</span>
+                  <span className="text-[10px] font-bold text-emerald-400 uppercase">Aktif</span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-gray-950/50 border border-gray-800/50">
+                  <span className="text-xs text-gray-400">Son Yedekleme</span>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase">2s Önce</span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-gray-950/50 border border-gray-800/50">
+                  <span className="text-xs text-gray-400">Tehdit Engelleme</span>
+                  <span className="text-[10px] font-bold text-blue-400 uppercase">Devrede</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8">
-          <h3 className="text-xl font-bold text-white mb-8">Veri Kaynakları</h3>
-          <div className="h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={storageData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={8} dataKey="value">
-                  {storageData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+
+        <div className="space-y-8">
+          <div className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8">
+            <h3 className="text-xl font-bold text-white mb-8">Veri Kaynakları</h3>
+            <div className="h-[250px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={storageData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={8} dataKey="value">
+                    {storageData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="space-y-3 mt-4">
+              {storageData.map(item => (
+                <div key={item.name} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
+                    <span className="text-gray-400">{item.name}</span>
+                  </div>
+                  <span className="text-white font-bold">{item.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="space-y-3 mt-4">
-            {storageData.map(item => (
-              <div key={item.name} className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">{item.name}</span>
-                <span className="text-white font-bold">{item.value}</span>
-              </div>
-            ))}
+
+          <div className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8">
+            <h3 className="text-xl font-bold text-white mb-6">Son Aktiviteler</h3>
+            <div className="space-y-6">
+              <ActivityItem icon={<FileText size={14} />} title="Yeni döküman yüklendi" time="12 dk önce" color="text-indigo-400" />
+              <ActivityItem icon={<MessageSquare size={14} />} title="AI Analizi tamamlandı" time="45 dk önce" color="text-emerald-400" />
+              <ActivityItem icon={<Search size={14} />} title="Semantik arama yapıldı" time="2s önce" color="text-blue-400" />
+              <ActivityItem icon={<Zap size={14} />} title="Vektör motoru güncellendi" time="5s önce" color="text-purple-400" />
+            </div>
           </div>
         </div>
       </div>
     </motion.div>
+  );
+}
+
+function ProgressStat({ label, value, color }: { label: string, value: number, color: string }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between text-xs font-bold text-gray-500 uppercase">
+        <span>{label}</span>
+        <span>%{value}</span>
+      </div>
+      <div className="h-1.5 w-full bg-gray-950 rounded-full overflow-hidden border border-gray-800">
+        <motion.div 
+          initial={{ width: 0 }}
+          animate={{ width: `${value}%` }}
+          className={`h-full ${color}`}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ActivityItem({ icon, title, time, color }: { icon: React.ReactNode, title: string, time: string, color: string }) {
+  return (
+    <div className="flex gap-4">
+      <div className={`h-8 w-8 rounded-lg bg-gray-950 border border-gray-800 flex items-center justify-center ${color}`}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-sm font-bold text-gray-200">{title}</p>
+        <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">{time}</p>
+      </div>
+    </div>
   );
 }
 
