@@ -26,8 +26,9 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json(data as SiteContent[]);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -69,9 +70,10 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(data as SiteContent);
-  } catch (error: any) {
-    const status = error.status || 500;
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status });
+  } catch (error: unknown) {
+    const status = (error as { status?: number })?.status || 500;
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return NextResponse.json({ error: message }, { status });
   }
 }
 
@@ -100,8 +102,9 @@ export async function DELETE(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, message: `Content ${id} deleted` });
-  } catch (error: any) {
-    const status = error.status || 500;
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status });
+  } catch (error: unknown) {
+    const status = (error as { status?: number })?.status || 500;
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return NextResponse.json({ error: message }, { status });
   }
 }

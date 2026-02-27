@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
             }
           }
           controller.close();
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error('[Chat API] Streaming Error:', error);
           controller.error(error);
         }
@@ -115,10 +115,10 @@ export async function POST(req: NextRequest) {
       },
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Chat API] Fatal Error:', error);
-    const status = error.status || 500;
-    const message = error.message || 'Internal Server Error';
+    const status = (error as { status?: number })?.status || 500;
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
     return new Response(JSON.stringify({ error: message }), {
       status,
       headers: { 'Content-Type': 'application/json' },

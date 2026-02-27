@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 interface IngestRequest {
   text: string;
   source?: string | null;
-  metadata?: Record<string, any> | null;
+  metadata?: Record<string, unknown> | null;
   chunkSize?: number | null;
   chunkOverlap?: number | null;
 }
@@ -93,10 +93,10 @@ export async function POST(req: NextRequest) {
       message: `Successfully ingested ${chunks.length} chunks from ${source}`
     }, { status: 201 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Ingest API] Fatal Error:', error);
-    const status = error.status || 500;
-    const message = error.message || 'Internal Server Error';
+    const status = (error as { status?: number })?.status || 500;
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
     return NextResponse.json({ error: message }, { status });
   }
 }

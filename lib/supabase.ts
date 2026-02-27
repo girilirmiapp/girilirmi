@@ -2,16 +2,16 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 
 /**
- * Robust Environment Variable Fallback
- * Prevents build crashes when environment variables are missing during CI/CD
+ * Robust Environment Variable Access
+ * Prevents build-time crashes by providing valid fallbacks for static analysis.
  */
 function getEnv(name: string, isRequired = false): string {
   const value = process.env[name];
   if (!value || value.trim() === '') {
     if (isRequired && typeof window === 'undefined') {
-      console.warn(`[Supabase Config] Missing required environment variable: ${name}`);
-      // Fallback for build phase only, actual runtime will still fail gracefully
-      return 'missing-env-fallback';
+      // Return a valid URL format for Supabase to prevent initialization crash
+      if (name.includes('URL')) return 'https://placeholder-project.supabase.co';
+      return 'static-build-fallback';
     }
     return '';
   }
@@ -23,15 +23,15 @@ const SUPABASE_ANON_KEY = getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', true);
 const SUPABASE_SERVICE_ROLE_KEY = getEnv('SUPABASE_SERVICE_ROLE_KEY');
 const OPENAI_API_KEY = getEnv('OPENAI_API_KEY');
 
-// OpenAI Instance
+// OpenAI Instance (Server-only use)
 export const openai = new OpenAI({ 
-  apiKey: OPENAI_API_KEY || 'no-key-fallback' 
+  apiKey: OPENAI_API_KEY || 'no-key-provided' 
 });
 
-// Admin Supabase Client (Server-side Only)
+// Admin Supabase Client (Bypasses RLS - Server-side only)
 export const supabaseAdmin: SupabaseClient = createClient(
   SUPABASE_URL,
-  SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY, // Fallback to anon if service role missing
+  SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY,
   {
     auth: {
       autoRefreshToken: false,
@@ -41,8 +41,8 @@ export const supabaseAdmin: SupabaseClient = createClient(
 );
 
 /**
- * Creates a standard Supabase client with optional token
- * Safe for both Client and Server components
+ * createSupabaseClient
+ * Universal client creator for both Client and Server components.
  */
 export function createSupabaseClient(token?: string | null): SupabaseClient {
   const headers: Record<string, string> = {};
@@ -59,7 +59,8 @@ export function createSupabaseClient(token?: string | null): SupabaseClient {
 }
 
 /**
- * Extract Bearer Token from Request Headers
+ * getBearerToken
+ * Helper to extract JWT from Authorization header.
  */
 export function getBearerToken(headers: Headers): string | null {
   const auth = headers.get('authorization') || headers.get('Authorization');
@@ -70,39 +71,40 @@ export function getBearerToken(headers: Headers): string | null {
 }
 
 /**
- * Strict Admin Check for Server-side Routes
+ * requireAdmin
+ * Strict server-side check for admin role.
+ * Throws 401/403 errors compatible with Next.js route handling.
  */
 export async function requireAdmin(headers: Headers): Promise<{ userId: string }> {
   const token = getBearerToken(headers);
   if (!token) {
-    const error = new Error('Unauthorized: No token provided');
+    const error = new Error('Unauthorized');
     (error as any).status = 401;
     throw error;
   }
   
   const supabase = createSupabaseClient(token);
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
   
-  if (userError || !userData?.user) {
-    const error = new Error('Unauthorized: Invalid or expired token');
+  if (userError || !user) {
+    const error = new Error('Unauthorized');
     (error as any).status = 401;
     throw error;
   }
   
-  const userId = userData.user.id;
   const { data: profile, error: profileError } = await supabaseAdmin
     .from('users')
     .select('role')
-    .eq('id', userId)
+    .eq('id', user.id)
     .single();
     
   if (profileError || !profile || profile.role !== 'admin') {
-    const error = new Error('Forbidden: Admin access required');
+    const error = new Error('Forbidden');
     (error as any).status = 403;
     throw error;
   }
   
-  return { userId };
+  return { userId: user.id };
 }
 
 export function getEmbeddingModel(): string {

@@ -70,9 +70,10 @@ export default function LandingPage() {
           return newMessages;
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Chat error:', err);
-      setMessages(prev => [...prev, { role: 'assistant', content: `Hata: ${err.message || 'Bir sorun oluştu.'}` }]);
+      const message = err instanceof Error ? err.message : 'Bir sorun oluştu.';
+      setMessages(prev => [...prev, { role: 'assistant', content: `Hata: ${message}` }]);
     } finally {
       setLoading(false);
     }
