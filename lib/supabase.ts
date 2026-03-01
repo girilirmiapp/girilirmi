@@ -93,17 +93,15 @@ export const supabaseAdmin = (typeof window === 'undefined') ? new Proxy({} as S
 
 // Dummy exports for functions that might be expected by other files
 // These should be implemented properly or removed if not needed
-export const getEmbeddingModel = () => {
-  console.warn("getEmbeddingModel is not implemented");
-  return "text-embedding-ada-002";
-};
+export const getEmbeddingModel = () => "text-embedding-ada-002";
 
-export const getChatModel = () => {
-  console.warn("getChatModel is not implemented");
-  return "gpt-3.5-turbo";
-};
+export const getChatModel = () => "gpt-3.5-turbo";
 
 export async function requireAdmin(headers: Headers): Promise<{ userId: string }> {
-  console.warn("requireAdmin is a mock implementation");
+  // This is a mock implementation. In a real-world scenario, you'd validate the JWT.
+  const token = headers.get('authorization');
+  if (!token) {
+    throw new Error("Unauthorized");
+  }
   return { userId: "mock-admin-user-id" };
 }
