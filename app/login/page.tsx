@@ -23,6 +23,10 @@ export default function LoginPage() {
     const password = formData.get('password') as string;
 
     try {
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        throw new Error('Sistem yapılandırma hatası: Sunucu bağlantısı kurulamadı (ENV missing).');
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,

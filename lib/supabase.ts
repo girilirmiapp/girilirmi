@@ -17,6 +17,9 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
  * Used in browser-side code to maintain session state.
  */
 export function createSupabaseClient(): SupabaseClient {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    console.warn('Supabase env vars missing, using placeholders. Auth will fail.');
+  }
   return createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 

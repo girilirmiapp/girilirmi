@@ -24,6 +24,10 @@ export default function RegisterPage() {
     const fullName = formData.get('fullName') as string;
 
     try {
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        throw new Error('Sistem yapılandırma hatası: Sunucu bağlantısı kurulamadı (ENV missing).');
+      }
+
       // 1. Sign up user
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
