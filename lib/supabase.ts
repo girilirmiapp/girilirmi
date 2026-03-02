@@ -6,9 +6,9 @@ import OpenAI from 'openai';
 export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 
-// Throw an error during build if client-side vars are missing
+// A simple, non-crashing check for the existence of env vars.
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  throw new Error('CRITICAL: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are not set. Application cannot start.');
+  console.warn('Supabase environment variables are not set. This may cause issues at runtime.');
 }
 
 /**
