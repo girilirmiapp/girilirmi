@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from "groq-sdk";
 
-// Initialize Gemini client
-const apiKey = process.env.GEMINI_API_KEY;
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
+// Initialize Groq client
+const apiKey = process.env.GROQ_API_KEY;
+const groq = apiKey ? new Groq({ apiKey }) : null;
 
 export const runtime = 'nodejs';
 
@@ -31,25 +31,19 @@ export async function POST(request: Request) {
     }
 
     // Check if API key is actually present for real execution
-    if (!genAI) {
-      console.warn('GEMINI_API_KEY is not set. Returning mock response for testing.');
+    if (!groq) {
+      console.warn('GROQ_API_KEY is not set. Returning mock response for testing.');
       const mockResponse: AnalysisResponse = {
         verdict: "GİRİLMEZ",
         risk_score: 8,
         opportunity_cost: "Bu proje ile harcayacağın 6 ayda, mevcut yeteneklerinle freelance çalışarak $20k kazanabilirsin. Bu proje ise muhtemelen $0 getirecek.",
         survival_plan: "Fikri tamamen değiştir. B2C yerine B2B bir mikro-SaaS'a odaklan. Pazarlama bütçesi olmadan bu işe girme.",
-        detailed_analysis: "Fikir, doymuş bir pazarda farklılaşma sunmuyor. (MOCK RESPONSE: Gemini API Key eksik)",
+        detailed_analysis: "Fikir, doymuş bir pazarda farklılaşma sunmuyor. (MOCK RESPONSE: Groq API Key eksik)",
         market_saturation: "Yüksek",
         local_competitor_radar: "Bölgenizde benzer hizmet veren 15+ işletme tespit edildi."
       };
       return NextResponse.json(mockResponse);
     }
-
-    // Switch to 'gemini-1.0-pro' for final fallback
-    // REMOVED generationConfig entirely as instructed
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.0-pro", 
-    });
 
     const systemPrompt = `Sen top %1 seviyesinde, acımasız ve stratejik bir iş/yatırım analistisin. Kullanıcının metninde lokasyon varsa pazar doygunluğunu da analiz et. Kibar olma. Fikrin açığını ve fırsat maliyetini bul.
 
@@ -64,23 +58,27 @@ export async function POST(request: Request) {
       "local_competitor_radar": "string"
     }
     
-    IMPORTANT: Return raw JSON only. No markdown.`;
+    IMPORTANT: Return raw JSON only. No markdown. No explanations.`;
     
-    const prompt = `${systemPrompt}\n\nAnaliz edilecek fikir: "${text}"`;
+    const completion = await groq.chat.completions.create({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Analiz edilecek fikir: "${text}"` }
+      ],
+      model: "llama-3.3-70b-versatile",
+      temperature: 0.5,
+      response_format: { type: "json_object" },
+    });
 
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
+    const responseText = completion.choices[0]?.message?.content;
 
     if (!responseText) {
-      throw new Error('Gemini returned empty content');
+      throw new Error('Groq returned empty content');
     }
-
-    // Clean up responseText in case the model adds backticks despite instructions
-    const cleanedResponseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
 
     let analysis: AnalysisResponse;
     try {
-      analysis = JSON.parse(cleanedResponseText) as AnalysisResponse;
+      analysis = JSON.parse(responseText) as AnalysisResponse;
     } catch (parseError) {
       console.error('JSON Parse Error:', parseError);
       console.error('Raw Response:', responseText);
