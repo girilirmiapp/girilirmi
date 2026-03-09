@@ -45,11 +45,10 @@ export async function POST(request: Request) {
       return NextResponse.json(mockResponse);
     }
 
+    // Switch to 'gemini-pro' (Gemini 1.0) for universal access
+    // REMOVED generationConfig with responseMimeType: "application/json" as it's not supported in Gemini 1.0
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-pro",
-      generationConfig: {
-        responseMimeType: "application/json",
-      },
+      model: "gemini-pro", 
     });
 
     const systemPrompt = `Sen top %1 seviyesinde, acımasız ve stratejik bir iş/yatırım analistisin. Kullanıcının metninde lokasyon varsa pazar doygunluğunu da analiz et. Kibar olma. Fikrin açığını ve fırsat maliyetini bul.
@@ -63,7 +62,9 @@ export async function POST(request: Request) {
       "detailed_analysis": "string",
       "market_saturation": "Yüksek" | "Orta" | "Düşük",
       "local_competitor_radar": "string"
-    }`;
+    }
+    
+    CRITICAL: You MUST output ONLY valid JSON. Do not use markdown, do not use \`\`\`json backticks. Return purely the raw JSON object.`;
     
     const prompt = `${systemPrompt}\n\nAnaliz edilecek fikir: "${text}"`;
 
@@ -74,7 +75,17 @@ export async function POST(request: Request) {
       throw new Error('Gemini returned empty content');
     }
 
-    const analysis = JSON.parse(responseText) as AnalysisResponse;
+    // Clean up responseText in case the model adds backticks despite instructions
+    const cleanedResponseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    let analysis: AnalysisResponse;
+    try {
+      analysis = JSON.parse(cleanedResponseText) as AnalysisResponse;
+    } catch (parseError) {
+      console.error('JSON Parse Error:', parseError);
+      console.error('Raw Response:', responseText);
+      throw new Error('Failed to parse AI response as JSON');
+    }
 
     return NextResponse.json(analysis);
 
