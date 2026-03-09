@@ -328,33 +328,45 @@ function ChatSimulator() {
   );
 }
 
+
+interface AnalysisResult {
+  verdict: "GİRİLİR" | "GİRİLMEZ";
+  risk_score: number;
+  opportunity_cost: string;
+  survival_plan: string;
+  detailed_analysis: string;
+}
+
 function DataAnalyzer() {
   const [data, setData] = useState('');
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const analyze = () => {
+  const analyze = async () => {
     if (!data.trim()) return;
     setLoading(true);
-    setTimeout(() => {
-      const words = data.trim().split(/\s+/).length;
-      const chars = data.length;
-      const sentiment = Math.random() * 100;
-      
-      setResult({
-        stats: [
-          { name: 'Kelimeler', value: words },
-          { name: 'Karakterler', value: chars },
-          { name: 'Yoğunluk', value: (chars / words).toFixed(1) }
-        ],
-        chart: [
-          { name: 'Sentiment', value: sentiment },
-          { name: 'Objectivity', value: 100 - sentiment }
-        ]
+    setResult(null);
+    
+    try {
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: data }),
       });
-      setLoading(false);
+
+      if (!response.ok) {
+        throw new Error('Analiz başarısız oldu.');
+      }
+
+      const json = await response.json();
+      setResult(json);
       toast.success('Analiz tamamlandı!');
-    }, 1000);
+    } catch (error) {
+      toast.error('Bir hata oluştu. Lütfen tekrar deneyin.');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -369,7 +381,7 @@ function DataAnalyzer() {
           <textarea 
             value={data}
             onChange={e => setData(e.target.value)}
-            placeholder="Analiz edilecek metni buraya yapıştırın..."
+            placeholder="İş fikrinizi veya yatırım planınızı detaylıca anlatın..."
             className="w-full h-64 bg-gray-950 border border-gray-800 rounded-2xl p-6 text-sm text-gray-300 focus:border-indigo-500 outline-none transition-all resize-none"
           />
           <button 
@@ -378,45 +390,72 @@ function DataAnalyzer() {
             className="w-full mt-6 bg-indigo-600 py-4 rounded-2xl font-bold hover:bg-indigo-500 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 active:scale-[0.98] disabled:opacity-50"
           >
             {loading ? <Loader2 className="animate-spin" size={20} /> : <Zap size={20} />}
-            {loading ? 'Analiz Ediliyor...' : 'Hemen Analiz Et'}
+            {loading ? 'Yapay Zeka Analiz Ediyor...' : 'Hemen Analiz Et'}
           </button>
         </div>
       </div>
 
       <div className="space-y-6">
         {result ? (
-          <div className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8 h-full">
-            <h3 className="text-xl font-bold text-white mb-8">Analiz Sonuçları</h3>
-            <div className="grid grid-cols-3 gap-4 mb-10">
-              {result.stats.map((s: any) => (
-                <div key={s.name} className="bg-gray-950/50 p-4 rounded-2xl border border-gray-800">
-                  <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">{s.name}</p>
-                  <p className="text-xl font-bold text-indigo-400">{s.value}</p>
-                </div>
-              ))}
+          <div className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8 h-full overflow-y-auto max-h-[800px]">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-xl font-bold text-white">Analiz Sonuçları</h3>
+              <div className={`px-4 py-2 rounded-xl text-sm font-bold ${result.verdict === 'GİRİLİR' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
+                {result.verdict}
+              </div>
             </div>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={result.chart}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
-                  <XAxis dataKey="name" stroke="#6b7280" fontSize={12} />
-                  <YAxis hide />
-                  <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151' }} />
-                  <Bar dataKey="value" fill="#4f46e5" radius={[10, 10, 0, 0]} barSize={60} />
-                </BarChart>
-              </ResponsiveContainer>
+
+            <div className="space-y-6">
+              <div className="bg-gray-950/50 p-6 rounded-2xl border border-gray-800">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-gray-400 text-sm font-bold uppercase">Risk Skoru</span>
+                  <span className={`text-2xl font-bold ${result.risk_score > 7 ? 'text-rose-400' : result.risk_score > 4 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                    {result.risk_score}/10
+                  </span>
+                </div>
+                <div className="h-2 w-full bg-gray-900 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full transition-all duration-1000 ${result.risk_score > 7 ? 'bg-rose-500' : result.risk_score > 4 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                    style={{ width: `${result.risk_score * 10}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="p-4 rounded-2xl bg-gray-950/30 border border-gray-800">
+                  <h4 className="text-indigo-400 font-bold mb-2 flex items-center gap-2">
+                    <Activity size={16} /> Fırsat Maliyeti
+                  </h4>
+                  <p className="text-gray-300 text-sm leading-relaxed">{result.opportunity_cost}</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-gray-950/30 border border-gray-800">
+                  <h4 className="text-emerald-400 font-bold mb-2 flex items-center gap-2">
+                    <ShieldCheck size={16} /> Hayatta Kalma Planı
+                  </h4>
+                  <p className="text-gray-300 text-sm leading-relaxed">{result.survival_plan}</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-gray-950/30 border border-gray-800">
+                  <h4 className="text-blue-400 font-bold mb-2 flex items-center gap-2">
+                    <FileText size={16} /> Detaylı Analiz
+                  </h4>
+                  <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{result.detailed_analysis}</p>
+                </div>
+              </div>
             </div>
           </div>
         ) : (
-          <div className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8 h-full flex flex-col items-center justify-center text-center text-gray-500 opacity-50 space-y-4">
-            <Activity size={48} />
-            <p className="text-sm font-medium">Analiz sonuçları burada görünecek.</p>
+          <div className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8 h-full flex flex-col items-center justify-center text-center text-gray-500 opacity-50 space-y-4 min-h-[400px]">
+            <Bot size={48} />
+            <p className="text-sm font-medium">Fikrinizi girin ve yapay zeka motorunun<br/>acımasız analizini başlatın.</p>
           </div>
         )}
       </div>
     </motion.div>
   );
 }
+
 
 function StatCard({ title, value, change, isPositive, icon }: { title: string, value: string, change: string, isPositive: boolean, icon: React.ReactNode }) {
   return (
