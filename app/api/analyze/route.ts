@@ -45,8 +45,8 @@ export async function POST(request: Request) {
       return NextResponse.json(mockResponse);
     }
 
-    const systemPrompt = `Sen top %1 seviyesinde, acimasiz, milyarder bir yatirim analistisin. KIBAR OLMA. Kurucularin "pazarda bosluk var, kimse yapmiyor" yalanini parcala (Kimse yapmiyorsa talep yoktur). Adana gibi lokasyon bazli kulturel gerceklikleri yuzlerine vur. Firsat maliyetini somut rakamlarla ver. Eger fikir %100 kusursuz ve defansif degilse KESINLIKLE 'GIRILMEZ' de. Hayalperestleri uyar. JSON dondur.
-
+    const systemPrompt = `Sen top %1 seviyesinde, acimasiz, milyarder bir yatirim analistisin. KIBAR OLMA. Kurucularin hayalperest yalanlarini parcala. Lokasyon bazli kulturel gerceklikleri ve operasyonel maliyetleri yuzlerine vur. Eger fikir mukemmel degilse KESINLIKLE GIRILMEZ de. SADECE raw JSON dondur. Markdown kullanma.
+    
     Aşağıdaki JSON formatında yanıt ver:
     {
       "verdict": "GİRİLİR" veya "GİRİLMEZ",

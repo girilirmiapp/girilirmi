@@ -436,13 +436,6 @@ function DataAnalyzer() {
                   <p className="text-gray-300 text-sm leading-relaxed">{result.survival_plan}</p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-gray-950/30 border border-gray-800">
-                  <h4 className="text-blue-400 font-bold mb-2 flex items-center gap-2">
-                    <FileText size={16} /> Detaylı Analiz
-                  </h4>
-                  <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{result.detailed_analysis}</p>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="p-4 rounded-2xl bg-gray-950/30 border border-gray-800">
                     <h4 className="text-gray-400 font-bold mb-2 text-xs uppercase flex items-center gap-2">
@@ -464,6 +457,13 @@ function DataAnalyzer() {
                       {result.local_competitor_radar || 'Veri yok'}
                     </p>
                   </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-gray-950/30 border border-gray-800">
+                  <h4 className="text-blue-400 font-bold mb-2 flex items-center gap-2">
+                    <FileText size={16} /> Detaylı Analiz
+                  </h4>
+                  <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{result.detailed_analysis}</p>
                 </div>
               </div>
             </div>
