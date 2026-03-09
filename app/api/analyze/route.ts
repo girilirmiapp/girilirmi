@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize Gemini client
 const apiKey = process.env.GEMINI_API_KEY;
@@ -17,45 +17,6 @@ interface AnalysisResponse {
   market_saturation: "Yüksek" | "Orta" | "Düşük";
   local_competitor_radar: string;
 }
-
-const analysisSchema = {
-  type: SchemaType.OBJECT,
-  properties: {
-    verdict: {
-      type: SchemaType.STRING,
-      enum: ["GİRİLİR", "GİRİLMEZ"],
-    },
-    risk_score: {
-      type: SchemaType.NUMBER,
-      description: "Risk score from 1 to 10",
-    },
-    opportunity_cost: {
-      type: SchemaType.STRING,
-    },
-    survival_plan: {
-      type: SchemaType.STRING,
-    },
-    detailed_analysis: {
-      type: SchemaType.STRING,
-    },
-    market_saturation: {
-      type: SchemaType.STRING,
-      enum: ["Yüksek", "Orta", "Düşük"],
-    },
-    local_competitor_radar: {
-      type: SchemaType.STRING,
-    },
-  },
-  required: [
-    "verdict",
-    "risk_score",
-    "opportunity_cost",
-    "survival_plan",
-    "detailed_analysis",
-    "market_saturation",
-    "local_competitor_radar",
-  ],
-};
 
 export async function POST(request: Request) {
   try {
@@ -88,11 +49,21 @@ export async function POST(request: Request) {
       model: "gemini-1.5-flash",
       generationConfig: {
         responseMimeType: "application/json",
-        responseSchema: analysisSchema,
       },
     });
 
-    const systemPrompt = `Sen top %1 seviyesinde, acımasız ve stratejik bir iş/yatırım analistisin. Kullanıcının metninde lokasyon varsa pazar doygunluğunu da analiz et. Kibar olma. Fikrin açığını ve fırsat maliyetini bul.`;
+    const systemPrompt = `Sen top %1 seviyesinde, acımasız ve stratejik bir iş/yatırım analistisin. Kullanıcının metninde lokasyon varsa pazar doygunluğunu da analiz et. Kibar olma. Fikrin açığını ve fırsat maliyetini bul.
+
+    Aşağıdaki JSON formatında yanıt ver:
+    {
+      "verdict": "GİRİLİR" veya "GİRİLMEZ",
+      "risk_score": sayı (1-10),
+      "opportunity_cost": "string",
+      "survival_plan": "string",
+      "detailed_analysis": "string",
+      "market_saturation": "Yüksek" | "Orta" | "Düşük",
+      "local_competitor_radar": "string"
+    }`;
     
     const prompt = `${systemPrompt}\n\nAnaliz edilecek fikir: "${text}"`;
 
