@@ -335,6 +335,8 @@ interface AnalysisResult {
   opportunity_cost: string;
   survival_plan: string;
   detailed_analysis: string;
+  market_saturation?: string;
+  local_competitor_radar?: string;
 }
 
 function DataAnalyzer() {
