@@ -442,6 +442,29 @@ function DataAnalyzer() {
                   </h4>
                   <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{result.detailed_analysis}</p>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-2xl bg-gray-950/30 border border-gray-800">
+                    <h4 className="text-gray-400 font-bold mb-2 text-xs uppercase flex items-center gap-2">
+                      📍 Pazar Doygunluğu
+                    </h4>
+                    <p className={`text-lg font-bold ${
+                      result.market_saturation === 'Yüksek' ? 'text-rose-400' : 
+                      result.market_saturation === 'Orta' ? 'text-amber-400' : 'text-emerald-400'
+                    }`}>
+                      {result.market_saturation || 'Belirsiz'}
+                    </p>
+                  </div>
+                  
+                  <div className="p-4 rounded-2xl bg-gray-950/30 border border-gray-800">
+                    <h4 className="text-gray-400 font-bold mb-2 text-xs uppercase flex items-center gap-2">
+                      👁️ Yerel Rakip Radarı
+                    </h4>
+                    <p className="text-sm text-gray-300 font-medium">
+                      {result.local_competitor_radar || 'Veri yok'}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

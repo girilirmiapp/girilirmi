@@ -45,7 +45,7 @@ export async function POST(request: Request) {
       return NextResponse.json(mockResponse);
     }
 
-    const systemPrompt = `Sen top %1 seviyesinde, acımasız ve stratejik bir iş/yatırım analistisin. Kullanıcının metninde lokasyon varsa pazar doygunluğunu da analiz et. Kibar olma. Fikrin açığını ve fırsat maliyetini bul.
+    const systemPrompt = `Sen top %1 seviyesinde, acimasiz, milyarder bir yatirim analistisin. KIBAR OLMA. Kurucularin "pazarda bosluk var, kimse yapmiyor" yalanini parcala (Kimse yapmiyorsa talep yoktur). Adana gibi lokasyon bazli kulturel gerceklikleri yuzlerine vur. Firsat maliyetini somut rakamlarla ver. Eger fikir %100 kusursuz ve defansif degilse KESINLIKLE 'GIRILMEZ' de. Hayalperestleri uyar. JSON dondur.
 
     Aşağıdaki JSON formatında yanıt ver:
     {
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
         { role: "user", content: `Analiz edilecek fikir: "${text}"` }
       ],
       model: "llama-3.3-70b-versatile",
-      temperature: 0.5,
+      temperature: 0.1,
       response_format: { type: "json_object" },
     });
 
