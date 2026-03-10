@@ -1,14 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { 
   Zap, Activity, ShieldCheck, FileText, Bot, Loader2, LayoutDashboard, Radar, Terminal, ArrowRight, BarChart2,
   Clock, Settings, CreditCard, LogOut, ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function DashboardPage() {
+export default function Page() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -23,14 +22,12 @@ export default function DashboardPage() {
       <Sidebar />
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden relative">
+      <main className="flex-1 flex flex-col overflow-hidden relative bg-slate-950">
         <div className="absolute inset-0 bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-slate-950 -z-10"></div>
         
-        <div className="flex-1 overflow-y-auto p-6 lg:p-8 space-y-8 custom-scrollbar">
-          <Header />
+        <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
           <StatsGrid />
           <DataAnalyzer />
-          <HistoryTable />
         </div>
       </main>
     </div>
@@ -39,22 +36,16 @@ export default function DashboardPage() {
 
 function Sidebar() {
   const menuItems = [
-    { icon: <LayoutDashboard size={20} />, label: 'Yeni Analiz', active: true },
-    { icon: <Clock size={20} />, label: 'Geçmiş' },
-    { icon: <CreditCard size={20} />, label: 'Abonelik' },
-    { icon: <Settings size={20} />, label: 'Ayarlar' },
+    { icon: '📊', label: 'Yeni Analiz', active: true },
+    { icon: '🗂️', label: 'Geçmiş Analizler' },
+    { icon: '💳', label: 'Krediler' },
   ];
 
   return (
-    <aside className="w-64 border-r border-slate-800 bg-slate-900/50 flex-col hidden lg:flex">
+    <aside className="w-64 border-r border-slate-800 bg-slate-900/50 flex flex-col hidden lg:flex flex-shrink-0">
       <div className="p-6 border-b border-slate-800/50">
         <div className="flex items-center gap-3">
-          <div className="bg-indigo-600 text-white p-2 rounded-lg shadow-lg shadow-indigo-900/20">
-             <LayoutDashboard size={20} strokeWidth={2.5} />
-          </div>
-          <h1 className="text-lg font-bold tracking-tight text-white">
-            GİRİLİRMİ
-          </h1>
+          <span className="font-bold text-xl text-white tracking-tight">GİRİLİRMİ</span>
         </div>
       </div>
 
@@ -68,7 +59,7 @@ function Sidebar() {
                 : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
             }`}
           >
-            {item.icon}
+            <span>{item.icon}</span>
             {item.label}
           </button>
         ))}
@@ -84,37 +75,17 @@ function Sidebar() {
   );
 }
 
-function Header() {
-  return (
-    <header className="flex items-center justify-between">
-      <div>
-        <h2 className="text-2xl font-bold text-white tracking-tight">Kontrol Paneli</h2>
-        <p className="text-slate-400 text-sm mt-1">Yapay zeka destekli yatırım analizi ve risk yönetimi.</p>
-      </div>
-      <div className="flex items-center gap-4">
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs font-medium text-slate-400">
-           <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
-           <span>Sistem Çevrimiçi</span>
-        </div>
-        <div className="h-10 w-10 rounded-full bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-sm">
-          MK
-        </div>
-      </div>
-    </header>
-  );
-}
-
 function StatsGrid() {
   const stats = [
-    { label: 'Kalan Kredi', value: '850', sub: '/ 1000 Aylık', icon: <Zap size={18} className="text-amber-400" /> },
-    { label: 'Analiz Edilen Fikirler', value: '12', sub: 'Bu ay', icon: <LayoutDashboard size={18} className="text-indigo-400" /> },
-    { label: 'Ortalama Risk Skoru', value: '6.4', sub: 'Yüksek Risk', icon: <Activity size={18} className="text-rose-400" /> },
+    { label: 'Kalan Kredi', value: '3', sub: 'Kritik Seviye', icon: <Zap size={18} className="text-amber-400" /> },
+    { label: 'Toplam Analiz', value: '12', sub: 'Bu ay', icon: <LayoutDashboard size={18} className="text-indigo-400" /> },
+    { label: 'Risk Ortalaması', value: '7.4', sub: 'Yüksek Risk', icon: <Activity size={18} className="text-rose-400" /> },
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {stats.map((stat, index) => (
-        <div key={index} className="bg-slate-900/40 border border-slate-800 p-5 rounded-xl flex flex-col justify-between">
+        <div key={index} className="bg-slate-900 border border-slate-800 p-4 rounded-lg flex flex-col justify-between shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <span className="text-slate-400 text-xs font-medium uppercase tracking-wider">{stat.label}</span>
             <div className="p-2 bg-slate-800/50 rounded-lg border border-slate-700/50">
@@ -127,75 +98,6 @@ function StatsGrid() {
           </div>
         </div>
       ))}
-    </div>
-  );
-}
-
-function HistoryTable() {
-  const history = [
-    { id: 1, idea: 'SaaS Abonelik Yönetimi', date: 'Bugün, 14:30', score: 3.2, status: 'GİRİLİR' },
-    { id: 2, idea: 'Yapay Zeka Video Editörü', date: 'Dün, 09:15', score: 8.7, status: 'GİRİLMEZ' },
-    { id: 3, idea: 'E-Ticaret Lojistik Platformu', date: '12 Mart', score: 5.5, status: 'RİSKLİ' },
-    { id: 4, idea: 'Blockchain Oyunu', date: '10 Mart', score: 9.1, status: 'GİRİLMEZ' },
-  ];
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-white">Son Analizler</h3>
-        <button className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-medium">
-          Tümünü Gör <ChevronRight size={14} />
-        </button>
-      </div>
-      <div className="bg-slate-900/40 border border-slate-800 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="text-xs text-slate-500 uppercase bg-slate-900/60 border-b border-slate-800">
-              <tr>
-                <th className="px-6 py-4 font-medium">İş Fikri</th>
-                <th className="px-6 py-4 font-medium">Tarih</th>
-                <th className="px-6 py-4 font-medium">Risk Skoru</th>
-                <th className="px-6 py-4 font-medium">Sonuç</th>
-                <th className="px-6 py-4 font-medium text-right">Detay</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/50">
-              {history.map((item) => (
-                <tr key={item.id} className="hover:bg-slate-800/30 transition-colors">
-                  <td className="px-6 py-4 font-medium text-slate-300">{item.idea}</td>
-                  <td className="px-6 py-4 text-slate-500">{item.date}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className={`h-1.5 w-1.5 rounded-full ${
-                        item.score > 7 ? 'bg-rose-500' : item.score > 4 ? 'bg-amber-500' : 'bg-emerald-500'
-                      }`}></div>
-                      <span className={
-                        item.score > 7 ? 'text-rose-400' : item.score > 4 ? 'text-amber-400' : 'text-emerald-400'
-                      }>{item.score}/10</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                      item.status === 'GİRİLİR' 
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                        : item.status === 'GİRİLMEZ'
-                        ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                        : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                    }`}>
-                      {item.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="text-slate-400 hover:text-white transition-colors">
-                      <ArrowRight size={16} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
   );
 }
@@ -243,14 +145,14 @@ function DataAnalyzer() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 min-h-[500px]">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 min-h-[500px]">
       {/* Input Section */}
-      <div className="lg:col-span-5 flex flex-col">
+      <div className="flex flex-col">
         <div className="bg-slate-900/40 rounded-xl border border-slate-800 flex flex-col h-full shadow-sm">
           <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/20">
             <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
               <Terminal size={16} className="text-indigo-400" />
-              Yeni Analiz Başlat
+              Ham Veri Girişi
             </h2>
           </div>
           <div className="flex-1 p-6">
@@ -275,9 +177,9 @@ function DataAnalyzer() {
       </div>
 
       {/* Output Section */}
-      <div className="lg:col-span-7">
+      <div className="h-full">
         {result ? (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full overflow-y-auto custom-scrollbar pr-2">
             {/* Verdict Card */}
             <div className="bg-slate-900/40 rounded-xl border border-slate-800 p-6 flex items-center justify-between shadow-sm relative overflow-hidden group">
               <div className={`absolute inset-0 opacity-5 transition-colors duration-500 ${
