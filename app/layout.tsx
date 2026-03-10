@@ -38,11 +38,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr" className="dark scroll-smooth">
-      <body className={`${inter.className} bg-gray-950 text-gray-100 antialiased min-h-screen flex flex-col`}>
-        <Navbar />
-        <main className="flex-1">
-          {children}
-        </main>
+      <body className={`${inter.className} bg-gray-950 text-gray-100 antialiased min-h-screen`}>
+        {children}
         <Toaster 
           position="top-right" 
           richColors 
