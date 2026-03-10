@@ -110,6 +110,7 @@ interface AnalysisResult {
   detailed_analysis: string;
   market_saturation?: string;
   local_competitor_radar?: string;
+  case_study?: string;
 }
 
 function DataAnalyzer() {
@@ -239,19 +240,35 @@ function DataAnalyzer() {
             {/* Analysis Details */}
             <div className="grid grid-cols-1 gap-4">
               <ResultCard 
+                title="Stratejik Detaylı Analiz" 
+                icon={<FileText size={16} className="text-indigo-400" />}
+                content={result.detailed_analysis}
+              />
+              
+              {result.case_study && (
+                <div className="bg-slate-900/40 rounded-xl border border-indigo-500/20 p-6 shadow-sm hover:border-indigo-500/40 transition-colors relative overflow-hidden">
+                  <div className="absolute inset-0 bg-indigo-500/5 pointer-events-none"></div>
+                  <div className="flex items-center gap-2 mb-4 relative z-10">
+                    <div className="p-1.5 bg-indigo-500/20 rounded-lg">
+                      <Bot size={16} className="text-indigo-400" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-indigo-300">AI Vaka Analizi (Case Study)</h3>
+                  </div>
+                  <p className="text-slate-300 text-sm leading-7 relative z-10 italic">
+                    "{result.case_study}"
+                  </p>
+                </div>
+              )}
+
+              <ResultCard 
                 title="Fırsat Maliyeti" 
                 icon={<Activity size={16} className="text-rose-400" />}
                 content={result.opportunity_cost}
               />
               <ResultCard 
-                title="Hayatta Kalma Planı" 
+                title="Hayatta Kalma Planı (İlk 30 Gün)" 
                 icon={<ShieldCheck size={16} className="text-emerald-400" />}
                 content={result.survival_plan}
-              />
-              <ResultCard 
-                title="Stratejik Detaylı Analiz" 
-                icon={<FileText size={16} className="text-indigo-400" />}
-                content={result.detailed_analysis}
               />
             </div>
 
