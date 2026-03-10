@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createSupabaseClient } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -21,7 +21,6 @@ export default function Navbar() {
   
   const router = useRouter();
   const pathname = usePathname();
-  const [supabase] = useState(() => createSupabaseClient());
 
   useEffect(() => {
     const checkUser = async () => {
@@ -44,7 +43,7 @@ export default function Navbar() {
       subscription.unsubscribe();
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [supabase.auth, router]);
+  }, [router]);
 
   const handleLogout = async () => {
     try {
