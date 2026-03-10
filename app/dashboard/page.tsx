@@ -12,6 +12,8 @@ import { toast } from 'sonner';
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [credits, setCredits] = useState<number | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -24,11 +26,25 @@ export default function Dashboard() {
         router.push('/login');
       } else {
         setUserEmail(session.user.email || null);
+        setUserId(session.user.id);
+        fetchCredits(session.user.id);
       }
     };
     
     checkUser();
   }, [router]);
+
+  const fetchCredits = async (uid: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('credits')
+      .eq('id', uid)
+      .single();
+    
+    if (data) {
+      setCredits(data.credits);
+    }
+  };
 
   if (!mounted) return null;
 
@@ -85,7 +101,9 @@ export default function Dashboard() {
               <div className="text-zinc-500 text-xs font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">
                 <Zap size={14} className="text-amber-500" /> Kalan Kredi
               </div>
-              <div className="text-3xl font-light text-white">3 <span className="text-sm text-zinc-500">/ 5</span></div>
+              <div className="text-3xl font-light text-white">
+                {credits !== null ? credits : '-'} <span className="text-sm text-zinc-500">/ 5</span>
+              </div>
            </div>
            <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-6 backdrop-blur-md shadow-2xl">
               <div className="text-zinc-500 text-xs font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">
@@ -103,7 +121,7 @@ export default function Dashboard() {
         </div>
 
         {/* DATA ANALYZER COMPONENT INTEGRATION */}
-        <DataAnalyzer />
+        <DataAnalyzer credits={credits} userId={userId} refreshCredits={() => userId && fetchCredits(userId)} />
 
       </main>
     </div>
@@ -121,17 +139,25 @@ interface AnalysisResult {
   case_study?: string;
 }
 
-function DataAnalyzer() {
+function DataAnalyzer({ credits, userId, refreshCredits }: { credits: number | null, userId: string | null, refreshCredits: () => void }) {
   const [data, setData] = useState('');
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
 
   const analyze = async () => {
     if (!data.trim()) return;
+    
+    // Client-side credit check
+    if (credits !== null && credits <= 0) {
+      toast.error('Krediniz bitti. Devam etmek için paket satın alın.');
+      return;
+    }
+
     setLoading(true);
     setResult(null);
     
     try {
+      // 1. Run Analysis
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -144,6 +170,14 @@ function DataAnalyzer() {
 
       const json = await response.json();
       setResult(json);
+      
+      // 2. Deduct Credit
+      if (userId) {
+        const { error } = await supabase.rpc('decrement_credits', { user_id: userId });
+        if (error) console.error('Error deducting credit:', error);
+        refreshCredits();
+      }
+
       toast.success('Analiz tamamlandı');
     } catch (error) {
       toast.error('Sistem hatası. Tekrar deneyin.');
@@ -173,14 +207,23 @@ function DataAnalyzer() {
             />
           </div>
           <div className="p-6 border-t border-white/5 bg-white/[0.02]">
-            <button 
-              onClick={analyze}
-              disabled={!data.trim() || loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 disabled:cursor-not-allowed py-3 px-4 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] active:scale-[0.98]"
-            >
-              {loading ? <Loader2 className="animate-spin" size={18} /> : <Zap size={18} />}
-              {loading ? 'Yapay Zeka Analiz Ediyor...' : 'Analizi Başlat'}
-            </button>
+            {credits !== null && credits <= 0 ? (
+               <button 
+                 disabled
+                 className="w-full bg-red-500/10 border border-red-500/20 text-red-400 font-medium py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 cursor-not-allowed"
+               >
+                 <Zap size={18} /> Krediniz Bitti - Paket Alın
+               </button>
+            ) : (
+              <button 
+                onClick={analyze}
+                disabled={!data.trim() || loading}
+                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 disabled:cursor-not-allowed py-3 px-4 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] active:scale-[0.98]"
+              >
+                {loading ? <Loader2 className="animate-spin" size={18} /> : <Zap size={18} />}
+                {loading ? 'Yapay Zeka Analiz Ediyor... (1 Kredi)' : 'Analizi Başlat (1 Kredi)'}
+              </button>
+            )}
           </div>
         </div>
       </div>
