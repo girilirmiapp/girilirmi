@@ -1,39 +1,14 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
-  PieChart, Pie, Cell
-} from 'recharts';
-import { 
-  FileText, Cpu, Zap, Activity, Clock, 
-  ArrowUpRight, ArrowDownRight, ShieldCheck, LayoutDashboard,
-  MessageSquare, Send, Bot, User, BarChart3, Search, Loader2, RefreshCcw
+  Zap, Activity, ShieldCheck, FileText, Bot, Loader2, LayoutDashboard, Radar, Terminal
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-// --- Mock Data ---
-const queryData = [
-  { name: 'Pzt', value: 2400 },
-  { name: 'Sal', value: 3100 },
-  { name: 'Çar', value: 2800 },
-  { name: 'Per', value: 3900 },
-  { name: 'Cum', value: 4800 },
-  { name: 'Cmt', value: 3200 },
-  { name: 'Paz', value: 2900 },
-];
-
-const storageData = [
-  { name: 'PDF', value: 400, color: '#4f46e5' },
-  { name: 'Docx', value: 300, color: '#818cf8' },
-  { name: 'TXT', value: 200, color: '#a5b4fc' },
-  { name: 'Web', value: 100, color: '#c7d2fe' },
-];
-
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'chat' | 'analyze'>('overview');
 
   useEffect(() => {
     setMounted(true);
@@ -42,292 +17,32 @@ export default function DashboardPage() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-gray-950 pt-24 pb-12 px-6 lg:px-12">
-      <div className="max-w-[1600px] mx-auto space-y-10">
-        
-        {/* Header & Tabs */}
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
-              <LayoutDashboard className="text-indigo-500" size={32} />
-              Yönetim Paneli
-            </h1>
-            <p className="mt-2 text-gray-400">Platform özelliklerini kullanın ve verilerinizi analiz edin.</p>
+    <div className="min-h-screen bg-[#050505] text-gray-200 font-sans selection:bg-white/20">
+      <div className="max-w-[1800px] mx-auto p-4 lg:p-8">
+        <header className="mb-8 border-b border-gray-800 pb-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="bg-white text-black p-2 rounded-sm">
+               <LayoutDashboard size={20} strokeWidth={3} />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                GİRİLİRMİ <span className="text-gray-600 text-sm font-normal font-mono px-2 py-0.5 bg-gray-900 rounded-sm border border-gray-800">PRO TERMINAL v2.1</span>
+              </h1>
+            </div>
           </div>
-          
-          <div className="flex bg-gray-900/50 p-1 rounded-2xl border border-gray-800">
-            <TabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<LayoutDashboard size={16} />} label="Genel Bakış" />
-            <TabButton active={activeTab === 'chat'} onClick={() => setActiveTab('chat')} icon={<MessageSquare size={16} />} label="AI Chat" />
-            <TabButton active={activeTab === 'analyze'} onClick={() => setActiveTab('analyze')} icon={<BarChart3 size={16} />} label="Veri Analizi" />
+          <div className="flex items-center gap-3 bg-gray-900/50 px-3 py-1.5 rounded-sm border border-gray-800">
+             <div className="flex gap-1.5">
+               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+             </div>
+             <span className="text-[10px] font-mono text-gray-400 tracking-widest uppercase">System Operational</span>
           </div>
         </header>
 
-        <AnimatePresence mode="wait">
-          {activeTab === 'overview' && <OverviewView key="overview" />}
-          {activeTab === 'chat' && <ChatSimulator key="chat" />}
-          {activeTab === 'analyze' && <DataAnalyzer key="analyze" />}
-        </AnimatePresence>
+        <DataAnalyzer />
       </div>
     </div>
   );
 }
-
-function TabButton({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
-  return (
-    <button 
-      onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-        active ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-gray-500 hover:text-gray-300'
-      }`}
-    >
-      {icon} {label}
-    </button>
-  );
-}
-
-// --- Views ---
-
-function OverviewView() {
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="space-y-10"
-    >
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Toplam Analiz" value="12,482" change="+12.5%" isPositive={true} icon={<FileText className="text-indigo-400" />} />
-        <StatCard title="Aktif Sorgular" value="842" change="+5.2%" isPositive={true} icon={<Cpu className="text-emerald-400" />} />
-        <StatCard title="Sistem Sağlığı" value="%99.9" change="Sabit" isPositive={true} icon={<ShieldCheck className="text-amber-400" />} />
-        <StatCard title="Kullanılan Kredi" value="42.8k" change="+18.4%" isPositive={false} icon={<Zap className="text-indigo-400" />} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          <div className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8">
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-xl font-bold text-white">Analiz Trafiği</h3>
-              <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
-                <span className="h-2 w-2 rounded-full bg-indigo-500" />
-                Sorgu Sayısı
-              </div>
-            </div>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={queryData}>
-                  <defs>
-                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
-                  <XAxis dataKey="name" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-                  <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px' }} />
-                  <Area type="monotone" dataKey="value" stroke="#4f46e5" strokeWidth={3} fill="url(#colorValue)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8">
-              <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                <Activity size={20} className="text-emerald-400" />
-                Sistem Kaynakları
-              </h3>
-              <div className="space-y-6">
-                <ProgressStat label="CPU Kullanımı" value={24} color="bg-emerald-500" />
-                <ProgressStat label="RAM Kullanımı" value={68} color="bg-indigo-500" />
-                <ProgressStat label="Depolama" value={42} color="bg-amber-500" />
-              </div>
-            </div>
-            <div className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8">
-              <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                <ShieldCheck size={20} className="text-blue-400" />
-                Güvenlik Özeti
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-xl bg-gray-950/50 border border-gray-800/50">
-                  <span className="text-xs text-gray-400">SSL Durumu</span>
-                  <span className="text-[10px] font-bold text-emerald-400 uppercase">Aktif</span>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-gray-950/50 border border-gray-800/50">
-                  <span className="text-xs text-gray-400">Son Yedekleme</span>
-                  <span className="text-[10px] font-bold text-gray-500 uppercase">2s Önce</span>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-gray-950/50 border border-gray-800/50">
-                  <span className="text-xs text-gray-400">Tehdit Engelleme</span>
-                  <span className="text-[10px] font-bold text-blue-400 uppercase">Devrede</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-8">
-          <div className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8">
-            <h3 className="text-xl font-bold text-white mb-8">Veri Kaynakları</h3>
-            <div className="h-[250px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={storageData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={8} dataKey="value">
-                    {storageData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="space-y-3 mt-4">
-              {storageData.map(item => (
-                <div key={item.name} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="text-gray-400">{item.name}</span>
-                  </div>
-                  <span className="text-white font-bold">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8">
-            <h3 className="text-xl font-bold text-white mb-6">Son Aktiviteler</h3>
-            <div className="space-y-6">
-              <ActivityItem icon={<FileText size={14} />} title="Yeni döküman yüklendi" time="12 dk önce" color="text-indigo-400" />
-              <ActivityItem icon={<MessageSquare size={14} />} title="AI Analizi tamamlandı" time="45 dk önce" color="text-emerald-400" />
-              <ActivityItem icon={<Search size={14} />} title="Semantik arama yapıldı" time="2s önce" color="text-blue-400" />
-              <ActivityItem icon={<Zap size={14} />} title="Vektör motoru güncellendi" time="5s önce" color="text-purple-400" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-function ProgressStat({ label, value, color }: { label: string, value: number, color: string }) {
-  return (
-    <div className="space-y-2">
-      <div className="flex justify-between text-xs font-bold text-gray-500 uppercase">
-        <span>{label}</span>
-        <span>%{value}</span>
-      </div>
-      <div className="h-1.5 w-full bg-gray-950 rounded-full overflow-hidden border border-gray-800">
-        <motion.div 
-          initial={{ width: 0 }}
-          animate={{ width: `${value}%` }}
-          className={`h-full ${color}`}
-        />
-      </div>
-    </div>
-  );
-}
-
-function ActivityItem({ icon, title, time, color }: { icon: React.ReactNode, title: string, time: string, color: string }) {
-  return (
-    <div className="flex gap-4">
-      <div className={`h-8 w-8 rounded-lg bg-gray-950 border border-gray-800 flex items-center justify-center ${color}`}>
-        {icon}
-      </div>
-      <div>
-        <p className="text-sm font-bold text-gray-200">{title}</p>
-        <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">{time}</p>
-      </div>
-    </div>
-  );
-}
-
-function ChatSimulator() {
-  const [messages, setMessages] = useState<{ role: 'user' | 'bot', content: string }[]>([]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
-
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || loading) return;
-
-    const userText = input;
-    setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userText }]);
-    setLoading(true);
-
-    // Realistic simulation
-    setTimeout(() => {
-      setMessages(prev => [...prev, { 
-        role: 'bot', 
-        content: `"${userText}" sorgusunu analiz ettim. Vektör veri tabanımızda bu konuyla ilgili 4 eşleşme bulundu. RAG motoru en doğru cevabı sentezledi: Verileriniz güvenli ve optimize edilmiş durumda.` 
-      }]);
-      setLoading(false);
-    }, 1500);
-  };
-
-  return (
-    <motion.div 
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="max-w-4xl mx-auto rounded-3xl border border-gray-800 bg-gray-900/30 overflow-hidden flex flex-col h-[600px] shadow-2xl"
-    >
-      <div className="p-6 border-b border-gray-800 bg-gray-900/50 flex items-center gap-4">
-        <div className="h-10 w-10 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-400 border border-indigo-500/20">
-          <Bot size={24} />
-        </div>
-        <div>
-          <h3 className="font-bold text-white">AI Bilgi Asistanı</h3>
-          <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-widest">Simülatör Aktif</p>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {messages.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center text-gray-500 opacity-50 space-y-4">
-            <MessageSquare size={48} />
-            <p className="text-sm font-medium">Bir soru sorarak simülasyonu başlatın.</p>
-          </div>
-        )}
-        {messages.map((m, i) => (
-          <div key={i} className={`flex gap-4 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
-            <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${m.role === 'user' ? 'bg-gray-800' : 'bg-indigo-600'}`}>
-              {m.role === 'user' ? <User size={16} /> : <Bot size={16} />}
-            </div>
-            <div className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm ${m.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-200'}`}>
-              {m.content}
-            </div>
-          </div>
-        ))}
-        {loading && (
-          <div className="flex gap-4">
-            <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center"><Bot size={16} /></div>
-            <div className="bg-gray-800 px-4 py-2.5 rounded-2xl"><Loader2 className="animate-spin text-indigo-400" size={16} /></div>
-          </div>
-        )}
-        <div ref={scrollRef} />
-      </div>
-
-      <form onSubmit={handleSend} className="p-6 border-t border-gray-800 bg-gray-900/50">
-        <div className="relative">
-          <input 
-            type="text" 
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            placeholder="Mesajınızı yazın..."
-            className="w-full bg-gray-950 border border-gray-800 rounded-2xl py-4 pl-6 pr-14 text-sm focus:border-indigo-500 outline-none transition-all"
-          />
-          <button type="submit" disabled={!input.trim() || loading} className="absolute right-2 top-2 h-10 w-10 bg-indigo-600 rounded-xl flex items-center justify-center hover:bg-indigo-500 disabled:opacity-50 transition-all">
-            <Send size={18} />
-          </button>
-        </div>
-      </form>
-    </motion.div>
-  );
-}
-
 
 interface AnalysisResult {
   verdict: "GİRİLİR" | "GİRİLMEZ";
@@ -362,9 +77,9 @@ function DataAnalyzer() {
 
       const json = await response.json();
       setResult(json);
-      toast.success('Analiz tamamlandı!');
+      toast.success('Analiz tamamlandı');
     } catch (error) {
-      toast.error('Bir hata oluştu. Lütfen tekrar deneyin.');
+      toast.error('Sistem hatası. Tekrar deneyin.');
       console.error(error);
     } finally {
       setLoading(false);
@@ -372,130 +87,133 @@ function DataAnalyzer() {
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="grid grid-cols-1 lg:grid-cols-2 gap-8"
-    >
-      <div className="space-y-6">
-        <div className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8">
-          <h3 className="text-xl font-bold text-white mb-6">Ham Veri Girişi</h3>
-          <textarea 
-            value={data}
-            onChange={e => setData(e.target.value)}
-            placeholder="İş fikrinizi veya yatırım planınızı detaylıca anlatın..."
-            className="w-full h-64 bg-gray-950 border border-gray-800 rounded-2xl p-6 text-sm text-gray-300 focus:border-indigo-500 outline-none transition-all resize-none"
-          />
-          <button 
-            onClick={analyze}
-            disabled={!data.trim() || loading}
-            className="w-full mt-6 bg-indigo-600 py-4 rounded-2xl font-bold hover:bg-indigo-500 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 active:scale-[0.98] disabled:opacity-50"
-          >
-            {loading ? <Loader2 className="animate-spin" size={20} /> : <Zap size={20} />}
-            {loading ? 'Yapay Zeka Analiz Ediyor...' : 'Hemen Analiz Et'}
-          </button>
+    <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+      {/* Input Section */}
+      <div className="xl:col-span-4 flex flex-col h-[calc(100vh-180px)] min-h-[600px]">
+        <div className="flex-1 rounded-sm border border-gray-800 bg-[#0a0a0a] flex flex-col overflow-hidden shadow-2xl">
+          <div className="bg-[#111] px-4 py-3 border-b border-gray-800 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Terminal size={14} className="text-gray-500" />
+              <span className="text-xs font-mono font-bold text-gray-400 uppercase tracking-wider">Input Stream</span>
+            </div>
+          </div>
+          <div className="flex-1 p-4 relative group">
+            <textarea 
+              value={data}
+              onChange={e => setData(e.target.value)}
+              placeholder="// Girişim fikri, pazar analizi veya yatırım detaylarını buraya giriniz..."
+              className="w-full h-full bg-transparent border-none text-sm font-mono text-gray-300 focus:ring-0 outline-none resize-none placeholder:text-gray-800 leading-relaxed"
+            />
+          </div>
+          <div className="p-4 border-t border-gray-800 bg-[#111]">
+            <button 
+              onClick={analyze}
+              disabled={!data.trim() || loading}
+              className="w-full bg-white text-black hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed py-3.5 px-4 rounded-sm text-xs font-bold font-mono uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:translate-y-0.5"
+            >
+              {loading ? <Loader2 className="animate-spin" size={14} /> : <Zap size={14} fill="currentColor" />}
+              {loading ? 'Processing Data...' : 'Run Analysis'}
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="space-y-6">
+      {/* Output Section */}
+      <div className="xl:col-span-8 h-[calc(100vh-180px)] min-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
         {result ? (
-          <div className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8 h-full overflow-y-auto max-h-[800px]">
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-xl font-bold text-white">Analiz Sonuçları</h3>
-              <div className={`px-4 py-2 rounded-xl text-sm font-bold ${result.verdict === 'GİRİLİR' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
-                {result.verdict}
-              </div>
-            </div>
+          <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500 fade-in">
+            {/* KPI Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+               {/* Verdict */}
+               <div className="rounded-sm border border-gray-800 bg-[#0a0a0a] p-5 flex flex-col justify-between h-32 relative overflow-hidden group hover:border-gray-700 transition-colors">
+                  <div className={`absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity ${result.verdict === 'GİRİLİR' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                    <Activity size={64} />
+                  </div>
+                  <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">Algorithmic Verdict</span>
+                  <div className={`text-4xl font-black tracking-tighter mt-1 ${result.verdict === 'GİRİLİR' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                    {result.verdict}
+                  </div>
+               </div>
+               
+               {/* Risk Score */}
+               <div className="rounded-sm border border-gray-800 bg-[#0a0a0a] p-5 flex flex-col justify-between h-32 hover:border-gray-700 transition-colors">
+                  <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">Risk Index</span>
+                  <div className="flex items-baseline gap-1 mt-1">
+                    <span className={`text-5xl font-mono font-medium ${result.risk_score > 7 ? 'text-rose-500' : result.risk_score > 4 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                      {result.risk_score}
+                    </span>
+                    <span className="text-gray-600 font-mono text-sm">/10</span>
+                  </div>
+               </div>
 
-            <div className="space-y-6">
-              <div className="bg-gray-950/50 p-6 rounded-2xl border border-gray-800">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-gray-400 text-sm font-bold uppercase">Risk Skoru</span>
-                  <span className={`text-2xl font-bold ${result.risk_score > 7 ? 'text-rose-400' : result.risk_score > 4 ? 'text-amber-400' : 'text-emerald-400'}`}>
-                    {result.risk_score}/10
-                  </span>
-                </div>
-                <div className="h-2 w-full bg-gray-900 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full transition-all duration-1000 ${result.risk_score > 7 ? 'bg-rose-500' : result.risk_score > 4 ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                    style={{ width: `${result.risk_score * 10}%` }}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="p-4 rounded-2xl bg-gray-950/30 border border-gray-800">
-                  <h4 className="text-indigo-400 font-bold mb-2 flex items-center gap-2">
-                    <Activity size={16} /> Fırsat Maliyeti
-                  </h4>
-                  <p className="text-gray-300 text-sm leading-relaxed">{result.opportunity_cost}</p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-gray-950/30 border border-gray-800">
-                  <h4 className="text-emerald-400 font-bold mb-2 flex items-center gap-2">
-                    <ShieldCheck size={16} /> Hayatta Kalma Planı
-                  </h4>
-                  <p className="text-gray-300 text-sm leading-relaxed">{result.survival_plan}</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-gray-950/30 border border-gray-800">
-                    <h4 className="text-gray-400 font-bold mb-2 text-xs uppercase flex items-center gap-2">
-                      📍 Pazar Doygunluğu
-                    </h4>
-                    <p className={`text-lg font-bold ${
-                      result.market_saturation === 'Yüksek' ? 'text-rose-400' : 
-                      result.market_saturation === 'Orta' ? 'text-amber-400' : 'text-emerald-400'
+               {/* Market Saturation */}
+               <div className="rounded-sm border border-gray-800 bg-[#0a0a0a] p-5 flex flex-col justify-between h-32 hover:border-gray-700 transition-colors">
+                  <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">Market Saturation</span>
+                  <div className={`text-2xl font-bold mt-1 ${
+                      result.market_saturation === 'Yüksek' ? 'text-rose-500' : 
+                      result.market_saturation === 'Orta' ? 'text-amber-500' : 'text-emerald-500'
                     }`}>
-                      {result.market_saturation || 'Belirsiz'}
-                    </p>
+                    {result.market_saturation || 'N/A'}
                   </div>
-                  
-                  <div className="p-4 rounded-2xl bg-gray-950/30 border border-gray-800">
-                    <h4 className="text-gray-400 font-bold mb-2 text-xs uppercase flex items-center gap-2">
-                      👁️ Yerel Rakip Radarı
-                    </h4>
-                    <p className="text-sm text-gray-300 font-medium">
-                      {result.local_competitor_radar || 'Veri yok'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-gray-950/30 border border-gray-800">
-                  <h4 className="text-blue-400 font-bold mb-2 flex items-center gap-2">
-                    <FileText size={16} /> Detaylı Analiz
-                  </h4>
-                  <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{result.detailed_analysis}</p>
-                </div>
-              </div>
+               </div>
             </div>
+
+            {/* Detailed Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ResultCard 
+                title="Opportunity Cost" 
+                icon={<Activity size={14} className="text-rose-400" />}
+                content={result.opportunity_cost}
+              />
+              <ResultCard 
+                title="Survival Protocol" 
+                icon={<ShieldCheck size={14} className="text-emerald-400" />}
+                content={result.survival_plan}
+              />
+            </div>
+
+            <ResultCard 
+              title="Strategic Deep Dive" 
+              icon={<FileText size={14} className="text-blue-400" />}
+              content={result.detailed_analysis}
+              fullWidth
+            />
+
+            <ResultCard 
+               title="Local Competitor Radar"
+               icon={<Radar size={14} className="text-amber-400" />}
+               content={result.local_competitor_radar || "No data available."}
+            />
+
           </div>
         ) : (
-          <div className="rounded-3xl border border-gray-800 bg-gray-900/30 p-8 h-full flex flex-col items-center justify-center text-center text-gray-500 opacity-50 space-y-4 min-h-[400px]">
-            <Bot size={48} />
-            <p className="text-sm font-medium">Fikrinizi girin ve yapay zeka motorunun<br/>acımasız analizini başlatın.</p>
+          <div className="h-full rounded-sm border border-dashed border-gray-800 bg-[#0a0a0a] flex flex-col items-center justify-center text-center p-12">
+            <div className="w-20 h-20 rounded-full bg-[#111] flex items-center justify-center mb-6 border border-gray-800">
+               <Bot size={32} className="text-gray-600" />
+            </div>
+            <h3 className="text-gray-300 font-medium mb-2 font-mono uppercase tracking-widest">System Idle</h3>
+            <p className="text-gray-600 text-xs font-mono max-w-sm">
+              Waiting for data stream. Initialize analysis via the Input Stream terminal.
+            </p>
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }
 
-
-function StatCard({ title, value, change, isPositive, icon }: { title: string, value: string, change: string, isPositive: boolean, icon: React.ReactNode }) {
+function ResultCard({ title, icon, content, fullWidth }: { title: string, icon: React.ReactNode, content: string, fullWidth?: boolean }) {
   return (
-    <div className="rounded-3xl border border-gray-800 bg-gray-900/40 p-6 shadow-lg group hover:border-indigo-500/30 transition-all">
-      <div className="flex items-center justify-between mb-4">
-        <div className="h-12 w-12 rounded-2xl bg-gray-950 flex items-center justify-center border border-gray-800 group-hover:bg-indigo-600/10 transition-colors">
-          {icon}
-        </div>
-        <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg ${isPositive ? 'text-emerald-400 bg-emerald-400/5' : 'text-rose-400 bg-rose-400/5'}`}>
-          {isPositive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-          {change}
-        </div>
+    <div className={`rounded-sm border border-gray-800 bg-[#0a0a0a] overflow-hidden hover:border-gray-700 transition-colors ${fullWidth ? 'col-span-full' : ''}`}>
+      <div className="bg-[#111] px-4 py-3 border-b border-gray-800 flex items-center gap-2">
+        {icon}
+        <span className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-widest">{title}</span>
       </div>
-      <p className="text-sm font-medium text-gray-500 mb-1">{title}</p>
-      <h3 className="text-3xl font-bold text-white tracking-tight">{value}</h3>
+      <div className="p-6">
+        <p className="text-gray-300 text-sm leading-7 font-sans">
+          {content}
+        </p>
+      </div>
     </div>
   );
 }
