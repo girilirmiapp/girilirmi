@@ -22,7 +22,7 @@ export default function Page() {
       <Sidebar />
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden relative">
+      <main className="flex-1 flex flex-col overflow-hidden relative bg-slate-950">
         <div className="absolute inset-0 bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-slate-950 -z-10"></div>
         
         <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
@@ -42,7 +42,7 @@ function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 border-r border-slate-800 bg-slate-900/50 flex-col hidden lg:flex fixed h-full">
+    <aside className="w-64 border-r border-slate-800 bg-slate-900/50 flex flex-col hidden lg:flex flex-shrink-0">
       <div className="p-6 border-b border-slate-800/50">
         <div className="flex items-center gap-3">
           <span className="font-bold text-xl text-white tracking-tight">GİRİLİRMİ</span>
