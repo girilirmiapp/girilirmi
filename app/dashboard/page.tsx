@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import { 
   Zap, Activity, ShieldCheck, FileText, Bot, Loader2, LayoutDashboard, Radar, Terminal, ArrowRight, BarChart2,
   Clock, Settings, CreditCard, LogOut, ChevronRight
@@ -9,12 +11,31 @@ import { toast } from 'sonner';
 
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    
+    // Auth Check
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/login');
+      } else {
+        setUserEmail(session.user.email || null);
+      }
+    };
+    
+    checkUser();
+  }, [router]);
 
   if (!mounted) return null;
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
 
   return (
     <div className="flex h-screen bg-[#09090b] text-zinc-300 font-sans selection:bg-indigo-500/30 overflow-hidden antialiased tracking-tight relative">
@@ -28,6 +49,14 @@ export default function Dashboard() {
           <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-sm">G</div>
           GİRİLİRMİ
         </div>
+        
+        {userEmail && (
+          <div className="mb-6 px-4 py-2 bg-white/5 rounded-lg border border-white/5">
+            <div className="text-xs text-zinc-500 uppercase font-bold tracking-wider mb-1">Giriş Yapıldı</div>
+            <div className="text-xs text-white truncate font-mono">{userEmail}</div>
+          </div>
+        )}
+
         <nav className="flex flex-col gap-2">
           <div className="bg-white/10 text-white font-medium px-4 py-2.5 rounded-lg border border-white/10 shadow-sm transition-all cursor-pointer flex items-center gap-3">
             <LayoutDashboard size={18} /> Yeni Analiz
@@ -39,7 +68,10 @@ export default function Dashboard() {
             <CreditCard size={18} /> Krediler
           </div>
         </nav>
-        <div className="mt-auto text-zinc-600 hover:text-red-400 text-sm font-medium transition-all cursor-pointer px-4 flex items-center gap-2">
+        <div 
+          onClick={handleLogout}
+          className="mt-auto text-zinc-600 hover:text-red-400 text-sm font-medium transition-all cursor-pointer px-4 flex items-center gap-2"
+        >
           <LogOut size={16} /> Çıkış Yap
         </div>
       </aside>

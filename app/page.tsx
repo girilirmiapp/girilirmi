@@ -14,7 +14,7 @@ export default function LandingPage() {
            </div>
            <span className="font-bold text-xl text-white tracking-tight">GİRİLİRMİ</span>
         </div>
-        <Link href="/dashboard" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
+        <Link href="/login" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
           Giriş Yap
         </Link>
       </header>
@@ -43,14 +43,14 @@ export default function LandingPage() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-200 mb-20">
           <Link 
-            href="/dashboard" 
+            href="/login" 
             className="px-8 py-4 bg-white text-slate-950 font-bold rounded-full hover:bg-slate-200 transition-all flex items-center gap-2 shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_-15px_rgba(255,255,255,0.4)] hover:scale-105 active:scale-95"
           >
             Hemen Test Et <ArrowRight size={18} />
           </Link>
           
           <Link 
-            href="/dashboard" 
+            href="/login" 
             className="px-8 py-4 bg-slate-900 text-white font-medium rounded-full border border-slate-800 hover:bg-slate-800 transition-all hover:scale-105 active:scale-95"
           >
             Giriş Yap / Kayıt Ol
