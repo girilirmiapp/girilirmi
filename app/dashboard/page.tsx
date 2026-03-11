@@ -31,6 +31,9 @@ export default function Dashboard() {
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisResult | null>(null);
   const [activeTab, setActiveTab] = useState<'analiz' | 'finans' | 'kurul' | 'pdf'>('analiz');
+  const [financeInput, setFinanceInput] = useState('');
+  const [isFinanceLoading, setIsFinanceLoading] = useState(false);
+  const [financeResult, setFinanceResult] = useState<any | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -90,6 +93,65 @@ export default function Dashboard() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/login');
+  };
+
+  const handleFinanceAnalyze = async () => {
+    if (financeInput.length <= 20) {
+      toast.error('Lütfen en az 20 karakterlik detaylı bir iş fikri girin.');
+      return;
+    }
+
+    if (credits !== null && credits < 2) {
+      toast.error('Yetersiz kredi! Finansal analiz 2 kredi gerektirir.');
+      return;
+    }
+
+    setIsFinanceLoading(true);
+    setFinanceResult(null);
+
+    try {
+      const response = await fetch('/api/finance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: financeInput }),
+      });
+
+      if (!response.ok) throw new Error('Finansal analiz başarısız.');
+
+      const json = await response.json();
+      setFinanceResult(json);
+
+      if (userId) {
+        // Deduct 2 credits
+        const { error: creditError } = await supabase
+          .from('profiles')
+          .update({ credits: (credits || 0) - 2 })
+          .eq('id', userId);
+
+        if (creditError) {
+          console.error('Error deducting credit:', creditError);
+        } else {
+          setCredits((prev) => (prev !== null && prev >= 2 ? prev - 2 : prev));
+          toast.success('Finansal model oluşturuldu! (2 Kredi)');
+          
+          // Optional: Save to analyses table with a type if needed, 
+          // or just let it be ephemeral for now as per instructions.
+          // Saving it as a regular analysis for history tracking:
+          await supabase.from('analyses').insert({
+            user_id: userId,
+            idea_text: `[FINANCE] ${financeInput}`,
+            result: { ...json, type: 'finance' }, // Storing finance result in the JSONB column
+          });
+          
+          refreshData(userId);
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Analiz sırasında bir hata oluştu.');
+    } finally {
+      setIsFinanceLoading(false);
+    }
   };
 
   return (
@@ -207,12 +269,55 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'finans' && (
-          <div className="flex-1 flex items-center justify-center border border-dashed border-white/10 rounded-2xl bg-white/[0.01]">
-            <div className="text-center">
-              <PieChart size={48} className="mx-auto text-zinc-600 mb-4" />
-              <h3 className="text-xl font-bold text-zinc-300">Finansal Simülatör</h3>
-              <p className="text-zinc-500 mt-2">Bu modül yakında hizmetinizde olacak.</p>
+          <div className="space-y-6">
+            <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl">
+              <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2"><PieChart className="text-indigo-400"/> Finansal Simülatör</h2>
+              <p className="text-gray-400 text-sm mb-4">İş fikrinizi detaylıca anlatın. CFO yapay zeka motoru 1 yıllık maliyet, CAC ve ciro tablonuzu çıkarsın.</p>
+              <textarea 
+                value={financeInput} 
+                onChange={(e) => setFinanceInput(e.target.value)} 
+                placeholder="Örn: B2B firmalar için yapay zeka destekli ön muhasebe yazılımı (SaaS)..." 
+                className="w-full h-32 bg-black/50 border border-white/10 rounded-xl p-4 text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500 transition-colors mb-4"
+              />
+              <button 
+                onClick={handleFinanceAnalyze} 
+                disabled={isFinanceLoading || !financeInput} 
+                className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2"
+              >
+                {isFinanceLoading ? (
+                  <>
+                    <Loader2 className="animate-spin" size={16}/> Hesaplanıyor...
+                  </>
+                ) : (
+                  <>
+                    <Zap size={16}/> Finansal Model Çıkar (2 Kredi)
+                  </>
+                )}
+              </button>
             </div>
+
+            {financeResult && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-8 mb-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                  <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                    <Activity className="text-emerald-400" /> CFO Özeti
+                  </h3>
+                  <p className="text-zinc-300 italic text-lg leading-relaxed border-l-4 border-indigo-500 pl-4">
+                    "{financeResult.financial_summary}"
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <FinancialCard label="Başlangıç Sermayesi" value={financeResult.initial_investment} />
+                  <FinancialCard label="Aylık Yakım Hızı" value={financeResult.monthly_burn_rate} />
+                  <FinancialCard label="Müşteri Edinme Maliyeti (CAC)" value={financeResult.estimated_cac} />
+                  <FinancialCard label="Başabaş Noktası" value={financeResult.break_even_months} />
+                  <FinancialCard label="1. Yıl Ciro Tahmini" value={financeResult.year_1_revenue} />
+                  <FinancialCard label="Kar Marjı" value={financeResult.profit_margin} />
+                </div>
+              </div>
+            )}
           </div>
         )}
 
