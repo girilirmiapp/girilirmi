@@ -14,6 +14,8 @@ export default function Dashboard() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [credits, setCredits] = useState<number | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [analyses, setAnalyses] = useState<any[]>([]);
+  const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisResult | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -28,6 +30,7 @@ export default function Dashboard() {
         setUserEmail(session.user.email || null);
         setUserId(session.user.id);
         fetchCredits(session.user.id);
+        fetchAnalyses(session.user.id);
       }
     };
     
@@ -43,6 +46,25 @@ export default function Dashboard() {
     
     if (data) {
       setCredits(data.credits);
+    }
+  };
+
+  const fetchAnalyses = async (uid: string) => {
+    const { data, error } = await supabase
+      .from('analyses')
+      .select('*')
+      .eq('user_id', uid)
+      .order('created_at', { ascending: false });
+
+    if (data) {
+      setAnalyses(data);
+    }
+  };
+
+  const handleAnalysisSuccess = () => {
+    if (userId) {
+      fetchCredits(userId);
+      fetchAnalyses(userId);
     }
   };
 
@@ -73,20 +95,41 @@ export default function Dashboard() {
           </div>
         )}
 
-        <nav className="flex flex-col gap-2">
-          <div className="bg-white/10 text-white font-medium px-4 py-2.5 rounded-lg border border-white/10 shadow-sm transition-all cursor-pointer flex items-center gap-3">
+        <nav className="flex flex-col gap-2 flex-1 overflow-y-auto custom-scrollbar">
+          <div 
+            onClick={() => setSelectedAnalysis(null)}
+            className={`bg-white/10 text-white font-medium px-4 py-2.5 rounded-lg border border-white/10 shadow-sm transition-all cursor-pointer flex items-center gap-3 ${selectedAnalysis === null ? 'bg-indigo-500/20 border-indigo-500/30 text-indigo-300' : ''}`}
+          >
             <LayoutDashboard size={18} /> Yeni Analiz
           </div>
-          <div className="text-zinc-500 hover:text-zinc-300 hover:bg-white/5 px-4 py-2.5 rounded-lg transition-all cursor-pointer flex items-center gap-3">
-            <Clock size={18} /> Geçmiş Analizler
-          </div>
-          <div className="text-zinc-500 hover:text-zinc-300 hover:bg-white/5 px-4 py-2.5 rounded-lg transition-all cursor-pointer flex items-center gap-3">
-            <CreditCard size={18} /> Krediler
+          
+          <div className="mt-4 mb-2 px-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Geçmiş Analizler</div>
+          
+          {analyses.length > 0 ? (
+            analyses.map((analysis) => (
+              <div 
+                key={analysis.id}
+                onClick={() => setSelectedAnalysis(analysis.result)}
+                className={`text-zinc-400 hover:text-white hover:bg-white/5 px-4 py-2.5 rounded-lg transition-all cursor-pointer flex items-center gap-3 text-sm truncate ${selectedAnalysis === analysis.result ? 'bg-white/5 text-white' : ''}`}
+              >
+                <Clock size={14} className="flex-shrink-0" />
+                <span className="truncate">{analysis.idea_text?.substring(0, 20) || 'Analiz'}...</span>
+              </div>
+            ))
+          ) : (
+            <div className="px-4 py-2 text-xs text-zinc-600 italic">Henüz analiz yok.</div>
+          )}
+
+          <div className="mt-auto pt-4 border-t border-white/5">
+             <div className="text-zinc-500 hover:text-zinc-300 hover:bg-white/5 px-4 py-2.5 rounded-lg transition-all cursor-pointer flex items-center gap-3">
+              <CreditCard size={18} /> Krediler
+            </div>
           </div>
         </nav>
+        
         <div 
           onClick={handleLogout}
-          className="mt-auto text-zinc-600 hover:text-red-400 text-sm font-medium transition-all cursor-pointer px-4 flex items-center gap-2"
+          className="mt-4 text-zinc-600 hover:text-red-400 text-sm font-medium transition-all cursor-pointer px-4 flex items-center gap-2"
         >
           <LogOut size={16} /> Çıkış Yap
         </div>
@@ -109,19 +152,28 @@ export default function Dashboard() {
               <div className="text-zinc-500 text-xs font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">
                 <LayoutDashboard size={14} className="text-indigo-500" /> Toplam Analiz
               </div>
-              <div className="text-3xl font-light text-white">12</div>
+              <div className="text-3xl font-light text-white">{analyses.length}</div>
            </div>
            <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-6 backdrop-blur-md shadow-2xl relative overflow-hidden">
               <div className="absolute right-0 top-0 w-24 h-24 bg-red-500/10 blur-2xl"></div>
               <div className="text-zinc-500 text-xs font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">
                 <Activity size={14} className="text-red-500" /> Risk Ortalaması
               </div>
-              <div className="text-3xl font-light text-red-400">7.4</div>
+              <div className="text-3xl font-light text-red-400">
+                {analyses.length > 0 
+                  ? (analyses.reduce((acc, curr) => acc + (curr.result?.risk_score || 0), 0) / analyses.length).toFixed(1)
+                  : '-'}
+              </div>
            </div>
         </div>
 
         {/* DATA ANALYZER COMPONENT INTEGRATION */}
-        <DataAnalyzer credits={credits} userId={userId} refreshCredits={() => userId && fetchCredits(userId)} />
+        <DataAnalyzer 
+          credits={credits} 
+          userId={userId} 
+          onSuccess={handleAnalysisSuccess} 
+          initialResult={selectedAnalysis}
+        />
 
       </main>
     </div>
@@ -139,10 +191,21 @@ interface AnalysisResult {
   case_study?: string;
 }
 
-function DataAnalyzer({ credits, userId, refreshCredits }: { credits: number | null, userId: string | null, refreshCredits: () => void }) {
+function DataAnalyzer({ credits, userId, onSuccess, initialResult }: { credits: number | null, userId: string | null, onSuccess: () => void, initialResult: AnalysisResult | null }) {
   const [data, setData] = useState('');
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Sync result when initialResult changes (e.g. from sidebar history click)
+  useEffect(() => {
+    if (initialResult) {
+      setResult(initialResult);
+    } else {
+      // Reset if "New Analysis" is clicked
+      setResult(null);
+      setData('');
+    }
+  }, [initialResult]);
 
   const analyze = async () => {
     if (!data.trim()) return;
@@ -171,11 +234,25 @@ function DataAnalyzer({ credits, userId, refreshCredits }: { credits: number | n
       const json = await response.json();
       setResult(json);
       
-      // 2. Deduct Credit
+      // 2. Save Analysis & Deduct Credit
       if (userId) {
-        const { error } = await supabase.rpc('decrement_credits', { user_id: userId });
-        if (error) console.error('Error deducting credit:', error);
-        refreshCredits();
+        // Save to analyses table
+        const { error: insertError } = await supabase.from('analyses').insert({
+          user_id: userId,
+          idea_text: data,
+          result: json,
+        });
+        
+        if (insertError) {
+          console.error('Error saving analysis:', insertError);
+          toast.error('Analiz kaydedilemedi.');
+        }
+
+        // Deduct credit
+        const { error: creditError } = await supabase.rpc('decrement_credits', { user_id: userId });
+        if (creditError) console.error('Error deducting credit:', creditError);
+        
+        onSuccess();
       }
 
       toast.success('Analiz tamamlandı');
@@ -204,25 +281,39 @@ function DataAnalyzer({ credits, userId, refreshCredits }: { credits: number | n
               onChange={e => setData(e.target.value)}
               placeholder="İş fikrinizi, pazar analizinizi veya yatırım detaylarınızı buraya giriniz..."
               className="w-full h-[300px] lg:h-full bg-transparent border-none text-sm text-zinc-300 focus:ring-0 outline-none resize-none placeholder:text-zinc-600 leading-relaxed font-mono"
+              disabled={!!initialResult} // Disable editing if viewing history
             />
           </div>
           <div className="p-6 border-t border-white/5 bg-white/[0.02]">
-            {credits !== null && credits <= 0 ? (
-               <button 
-                 disabled
-                 className="w-full bg-red-500/10 border border-red-500/20 text-red-400 font-medium py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 cursor-not-allowed"
-               >
-                 <Zap size={18} /> Krediniz Bitti - Paket Alın
-               </button>
-            ) : (
+            {initialResult ? (
               <button 
-                onClick={analyze}
-                disabled={!data.trim() || loading}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 disabled:cursor-not-allowed py-3 px-4 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] active:scale-[0.98]"
+                onClick={() => {
+                   // This is a bit of a hack to "reset" the view, but better handled by parent state
+                   // In this simple version, clicking "Yeni Analiz" in sidebar is the way.
+                   toast.info("Yeni analiz yapmak için sol menüden 'Yeni Analiz'e tıklayın.");
+                }}
+                className="w-full bg-white/5 text-zinc-400 font-medium py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 cursor-pointer hover:bg-white/10 transition-colors"
               >
-                {loading ? <Loader2 className="animate-spin" size={18} /> : <Zap size={18} />}
-                {loading ? 'Yapay Zeka Analiz Ediyor... (1 Kredi)' : 'Analizi Başlat (1 Kredi)'}
+                <Clock size={18} /> Geçmiş Analiz Görüntüleniyor
               </button>
+            ) : (
+              credits !== null && credits <= 0 ? (
+                 <button 
+                   disabled
+                   className="w-full bg-red-500/10 border border-red-500/20 text-red-400 font-medium py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 cursor-not-allowed"
+                 >
+                   <Zap size={18} /> Krediniz Bitti - Paket Alın
+                 </button>
+              ) : (
+                <button 
+                  onClick={analyze}
+                  disabled={!data.trim() || loading}
+                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 disabled:cursor-not-allowed py-3 px-4 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] active:scale-[0.98]"
+                >
+                  {loading ? <Loader2 className="animate-spin" size={18} /> : <Zap size={18} />}
+                  {loading ? 'Yapay Zeka Analiz Ediyor... (1 Kredi)' : 'Analizi Başlat (1 Kredi)'}
+                </button>
+              )
             )}
           </div>
         </div>
@@ -230,7 +321,12 @@ function DataAnalyzer({ credits, userId, refreshCredits }: { credits: number | n
 
       {/* Output Section */}
       <div className="h-full">
-        {result ? (
+        {loading ? (
+           <div className="h-full rounded-2xl border border-white/5 bg-white/[0.01] flex flex-col items-center justify-center p-12 space-y-4">
+             <Loader2 className="animate-spin text-indigo-500" size={48} />
+             <p className="text-zinc-400 animate-pulse">Veriler işleniyor, lütfen bekleyin...</p>
+           </div>
+        ) : result ? (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full overflow-y-auto custom-scrollbar pr-2">
             {/* Verdict Card */}
             <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-6 flex items-center justify-between shadow-2xl backdrop-blur-md hover:border-white/10 transition-all duration-300 relative overflow-hidden group">
@@ -347,7 +443,7 @@ function ResultCard({ title, icon, content }: { title: string, icon: React.React
         {icon}
         <h3 className="text-sm font-semibold text-zinc-300">{title}</h3>
       </div>
-      <p className="text-zinc-400 text-sm leading-7">
+      <p className="text-zinc-400 text-sm leading-7 whitespace-pre-wrap">
         {content}
       </p>
     </div>
