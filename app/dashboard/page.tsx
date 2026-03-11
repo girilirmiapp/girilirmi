@@ -184,17 +184,25 @@ export default function Dashboard() {
 }
 
 interface AnalysisResult {
-  board_opinions: {
+  verdict: string;
+  risk_score: number;
+  opportunity_cost: string;
+  survival_plan: string;
+  detailed_analysis: string;
+  market_saturation?: string;
+  local_competitor_radar?: string;
+  case_study?: string;
+  // Optional fields for the Tier 2 deep dive:
+  board_opinions?: {
     investor: string;
     growth_hacker: string;
     lawyer: string;
   };
-  financials: {
+  financials?: {
     estimated_cac: string;
     break_even_months: string;
     year_1_revenue: string;
   };
-  verdict: string;
 }
 
 function DataAnalyzer({ credits, userId, onSuccess, initialResult, setCredits }: { credits: number | null, userId: string | null, onSuccess: () => void, initialResult: AnalysisResult | null, setCredits: React.Dispatch<React.SetStateAction<number | null>> }) {
@@ -357,35 +365,56 @@ function DataAnalyzer({ credits, userId, onSuccess, initialResult, setCredits }:
               <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight relative z-10">
                 {result.verdict}
               </h2>
+              <div className="mt-4 flex items-center justify-center gap-2">
+                <span className="text-zinc-400 text-sm font-medium uppercase tracking-widest">Risk Skoru</span>
+                <span className={`text-2xl font-bold ${
+                  result.risk_score > 7 ? 'text-rose-400' : result.risk_score > 4 ? 'text-amber-400' : 'text-emerald-400'
+                }`}>
+                  {result.risk_score}/10
+                </span>
+              </div>
             </div>
 
-            {/* Financial Projections */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-               <FinancialCard label="Tahmini CAC" value={result.financials.estimated_cac} />
-               <FinancialCard label="Başabaş Noktası" value={result.financials.break_even_months} />
-               <FinancialCard label="1. Yıl Ciro Tahmini" value={result.financials.year_1_revenue} />
+            {/* Basic Analysis Details */}
+            <div className="grid grid-cols-1 gap-4">
+              <ResultCard 
+                title="Stratejik Detaylı Analiz" 
+                icon={<FileText size={16} className="text-indigo-400" />}
+                content={result.detailed_analysis}
+              />
+              
+              <ResultCard 
+                title="Fırsat Maliyeti" 
+                icon={<Activity size={16} className="text-rose-400" />}
+                content={result.opportunity_cost}
+              />
+              <ResultCard 
+                title="Hayatta Kalma Planı (İlk 30 Gün)" 
+                icon={<ShieldCheck size={16} className="text-emerald-400" />}
+                content={result.survival_plan}
+              />
             </div>
 
-            {/* Board Opinions */}
-            <div className="grid grid-cols-1 gap-6">
-              <BoardCard 
-                role="Melek Yatırımcı" 
-                content={result.board_opinions.investor}
-                color="border-rose-500/30"
-                icon={<Activity className="text-rose-400" />}
-              />
-              <BoardCard 
-                role="Growth Hacker" 
-                content={result.board_opinions.growth_hacker}
-                color="border-emerald-500/30"
-                icon={<Zap className="text-emerald-400" />}
-              />
-              <BoardCard 
-                role="Şirket Avukatı" 
-                content={result.board_opinions.lawyer}
-                color="border-blue-500/30"
-                icon={<ShieldCheck className="text-blue-400" />}
-              />
+            {/* TIER 2 UPSELL SECTION */}
+            <div className="mt-8 border-t border-white/10 pt-8">
+              <div className="bg-gradient-to-r from-indigo-900/20 to-purple-900/20 border border-indigo-500/20 rounded-2xl p-8 text-center relative overflow-hidden group hover:border-indigo-500/40 transition-all cursor-pointer"
+                   onClick={() => toast.info('Finansal analiz motoru hazırlanıyor...')}
+              >
+                <div className="absolute inset-0 bg-indigo-500/5 group-hover:bg-indigo-500/10 transition-colors"></div>
+                <div className="relative z-10 flex flex-col items-center gap-4">
+                  <div className="p-3 bg-indigo-500/20 rounded-full border border-indigo-500/30">
+                    <Sparkles size={24} className="text-indigo-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white">Derinlemesine Finans & Kurul Kararı</h3>
+                  <p className="text-zinc-400 max-w-md mx-auto text-sm">
+                    Yapay zeka yönetim kurulu (Yatırımcı, Growth Hacker, Avukat) ve detaylı finansal projeksiyonlar (CAC, Ciro) için kilidi açın.
+                  </p>
+                  <button className="mt-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-indigo-500/20 flex items-center gap-2 transition-all active:scale-95">
+                    <Bot size={18} />
+                    Analizi Derinleştir (Ekstra 2 Kredi)
+                  </button>
+                </div>
+              </div>
             </div>
 
           </div>

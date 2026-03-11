@@ -9,17 +9,25 @@ export const runtime = 'nodejs';
 
 // Interface for the expected response structure
 interface AnalysisResponse {
-  board_opinions: {
+  verdict: string;
+  risk_score: number;
+  opportunity_cost: string;
+  survival_plan: string;
+  detailed_analysis: string;
+  // Optional fields for the Tier 2 deep dive:
+  board_opinions?: {
     investor: string;
     growth_hacker: string;
     lawyer: string;
   };
-  financials: {
+  financials?: {
     estimated_cac: string;
     break_even_months: string;
     year_1_revenue: string;
   };
-  verdict: string;
+  market_saturation?: string;
+  local_competitor_radar?: string;
+  case_study?: string;
 }
 
 export async function POST(request: Request) {
