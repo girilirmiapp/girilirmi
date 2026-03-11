@@ -22,6 +22,7 @@ const ResultCard = ({ title, icon, content }: { title: string, icon: React.React
   </div>
 );
 
+// Dashboard Component
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
