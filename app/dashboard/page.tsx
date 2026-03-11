@@ -34,6 +34,9 @@ export default function Dashboard() {
   const [financeInput, setFinanceInput] = useState('');
   const [isFinanceLoading, setIsFinanceLoading] = useState(false);
   const [financeResult, setFinanceResult] = useState<any | null>(null);
+  const [boardInput, setBoardInput] = useState('');
+  const [isBoardLoading, setIsBoardLoading] = useState(false);
+  const [boardResult, setBoardResult] = useState<any | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -151,6 +154,62 @@ export default function Dashboard() {
       toast.error('Analiz sırasında bir hata oluştu.');
     } finally {
       setIsFinanceLoading(false);
+    }
+  };
+
+  const handleBoardAnalyze = async () => {
+    if (boardInput.length <= 20) {
+      toast.error('Lütfen en az 20 karakterlik detaylı bir iş fikri girin.');
+      return;
+    }
+
+    if (credits !== null && credits < 2) {
+      toast.error('Yetersiz kredi! Yönetim Kurulu analizi 2 kredi gerektirir.');
+      return;
+    }
+
+    setIsBoardLoading(true);
+    setBoardResult(null);
+
+    try {
+      const response = await fetch('/api/board', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: boardInput }),
+      });
+
+      if (!response.ok) throw new Error('Yönetim Kurulu analizi başarısız.');
+
+      const json = await response.json();
+      setBoardResult(json);
+
+      if (userId) {
+        // Deduct 2 credits
+        const { error: creditError } = await supabase
+          .from('profiles')
+          .update({ credits: (credits || 0) - 2 })
+          .eq('id', userId);
+
+        if (creditError) {
+          console.error('Error deducting credit:', creditError);
+        } else {
+          setCredits((prev) => (prev !== null && prev >= 2 ? prev - 2 : prev));
+          toast.success('Yönetim Kurulu toplandı! (2 Kredi)');
+          
+          await supabase.from('analyses').insert({
+            user_id: userId,
+            idea_text: `[BOARD] ${boardInput}`,
+            result: { ...json, type: 'board' },
+          });
+          
+          refreshData(userId);
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Analiz sırasında bir hata oluştu.');
+    } finally {
+      setIsBoardLoading(false);
     }
   };
 
@@ -322,12 +381,44 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'kurul' && (
-          <div className="flex-1 flex items-center justify-center border border-dashed border-white/10 rounded-2xl bg-white/[0.01]">
-            <div className="text-center">
-              <Users size={48} className="mx-auto text-zinc-600 mb-4" />
-              <h3 className="text-xl font-bold text-zinc-300">Yönetim Kurulu Paneli</h3>
-              <p className="text-zinc-500 mt-2">Bu modül yakında hizmetinizde olacak.</p>
+          <div className="space-y-6">
+            <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl">
+              <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2"><Users className="text-indigo-400"/> Acımasız Yönetim Kurulu</h2>
+              <p className="text-gray-400 text-sm mb-4">Fikrinizi Yatırımcı, Hukukçu ve Growth Hacker masasına yatırın. Zayıf noktalarınızı yüzünüze vursunlar.</p>
+              <textarea 
+                value={boardInput} 
+                onChange={(e) => setBoardInput(e.target.value)} 
+                placeholder="Örn: Restoran israfını azaltan yapay zeka B2B SaaS..." 
+                className="w-full h-32 bg-black/50 border border-white/10 rounded-xl p-4 text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500 transition-colors mb-4" 
+              />
+              <button 
+                onClick={handleBoardAnalyze} 
+                disabled={isBoardLoading || !boardInput} 
+                className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2" 
+              > 
+                {isBoardLoading ? 'Kurul Toplanıyor...' : <><Zap size={16}/> Kurulu Topla (2 Kredi)</>} 
+              </button> 
             </div>
+            {boardResult && (
+              <div className="grid grid-cols-1 gap-4 mt-6">
+                <div className="bg-red-500/5 border border-red-500/20 p-6 rounded-2xl">
+                  <h3 className="text-red-400 font-bold mb-3 flex items-center gap-2"><PieChart size={18}/> Acımasız Melek Yatırımcı</h3>
+                  <p className="text-gray-300 text-sm leading-relaxed">{boardResult.investor}</p>
+                </div>
+                <div className="bg-emerald-500/5 border border-emerald-500/20 p-6 rounded-2xl">
+                  <h3 className="text-emerald-400 font-bold mb-3 flex items-center gap-2"><Zap size={18}/> Agresif Growth Hacker</h3>
+                  <p className="text-gray-300 text-sm leading-relaxed">{boardResult.growth_hacker}</p>
+                </div>
+                <div className="bg-blue-500/5 border border-blue-500/20 p-6 rounded-2xl">
+                  <h3 className="text-blue-400 font-bold mb-3 flex items-center gap-2"><FileText size={18}/> Paranoyak Şirket Avukatı</h3>
+                  <p className="text-gray-300 text-sm leading-relaxed">{boardResult.lawyer}</p>
+                </div>
+                <div className="bg-indigo-500/10 border border-indigo-500/30 p-6 rounded-2xl mt-4">
+                  <h3 className="text-indigo-400 font-bold mb-2 flex items-center gap-2"><Users size={18}/> Kurulun Nihai Kararı</h3>
+                  <p className="text-white font-medium text-lg">{boardResult.verdict}</p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
