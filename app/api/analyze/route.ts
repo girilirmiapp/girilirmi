@@ -9,14 +9,17 @@ export const runtime = 'nodejs';
 
 // Interface for the expected response structure
 interface AnalysisResponse {
-  verdict: "GİRİLİR" | "GİRİLMEZ";
-  risk_score: number; // 1-10
-  opportunity_cost: string;
-  survival_plan: string;
-  detailed_analysis: string;
-  market_saturation: "Yüksek" | "Orta" | "Düşük";
-  local_competitor_radar: string;
-  case_study: string;
+  board_opinions: {
+    investor: string;
+    growth_hacker: string;
+    lawyer: string;
+  };
+  financials: {
+    estimated_cac: string;
+    break_even_months: string;
+    year_1_revenue: string;
+  };
+  verdict: string;
 }
 
 export async function POST(request: Request) {
@@ -47,31 +50,25 @@ export async function POST(request: Request) {
       return NextResponse.json(mockResponse);
     }
 
-    const systemPrompt = `Sen top %1 seviyesinde, acimasiz bir yatirim analistisin. Verilen fikri analiz ederken SADECE bu formati kullan ve raw JSON dondur: 
-1. verdict: GİRİLİR veya GİRİLMEZ. 
-2. risk_score: 1-10 arasi. 
-3. market_saturation: Yüksek/Orta/Düşük. 
-4. detailed_analysis: Fikrin zayifliklarini ve pazar dinamiklerini acimasizca yaz. 
-5. opportunity_cost: Nakit ve zaman israfini somut rakamlarla belirt. 
-6. case_study (YENI): Bu sektorde ve benzer lokasyonlarda (veya globalde) yapilmis gercek/emsal bir basarisizlik veya basari hikayesini ornek ver (Ornek: "X sirketi ayni hatayi yapip 6 ayda batti cunku..."). 
-7. survival_plan (GUNCELLENDI): Jenerik laflar etme. Kurucuya "Ilk 30 gunde yapilmasi gereken 3 taktiksel adim" seklinde milimetrik bir yol haritasi ver. 
-8. local_competitor_radar: Rakiplerin neyi yanlis yaptigini veya hangi avantaja sahip oldugunu analiz et.
+    const systemPrompt = `Sen bir 'Agentic Board of Directors' (Yapay Zeka Yönetim Kurulu) sistemisin. Görevin, verilen iş fikrini 3 farklı uzman perspektifinden analiz etmek ve katı finansal projeksiyonlar sunmaktır.
 
-If the user input is not a business idea or is nonsensical, respond ONLY with a JSON field error: "Lütfen geçerli bir iş fikri giriniz." and do not generate a fake analysis.
+Çıktın SADECE aşağıdaki JSON formatında olmalıdır (Markdown yok, açıklama yok):
 
-Aşağıdaki JSON formatında yanıt ver:
 {
-  "verdict": "GİRİLİR" veya "GİRİLMEZ",
-  "risk_score": sayı (1-10),
-  "opportunity_cost": "string",
-  "survival_plan": "string",
-  "detailed_analysis": "string",
-  "market_saturation": "Yüksek" | "Orta" | "Düşük",
-  "local_competitor_radar": "string",
-  "case_study": "string"
+  "board_opinions": {
+    "investor": "Agresif melek yatırımcı gözüyle 3 cümlelik acımasız eleştiri.",
+    "growth_hacker": "Kullanıcı edinme (Acquisition) stratejisi ve viralite potansiyeli.",
+    "lawyer": "Olası yasal riskler, regülasyon engelleri ve KVKK uyarıları."
+  },
+  "financials": {
+    "estimated_cac": "Tahmini Müşteri Edinme Maliyeti (Rakam)",
+    "break_even_months": "Başabaş noktası (Ay sayısı)",
+    "year_1_revenue": "Gerçekçi 1. yıl ciro tahmini"
+  },
+  "verdict": "Projeye girilir mi? (Evet/Hayır ve tek cümlelik net karar)"
 }
 
-IMPORTANT: Return raw JSON only. No markdown. No explanations.`;
+Eğer girdi bir iş fikri değilse, 'verdict' alanına 'Lütfen geçerli bir iş fikri giriniz' yaz ve diğer alanları boş bırak.`;
     
     const completion = await groq.chat.completions.create({
       messages: [

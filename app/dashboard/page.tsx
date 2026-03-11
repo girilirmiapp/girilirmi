@@ -184,14 +184,17 @@ export default function Dashboard() {
 }
 
 interface AnalysisResult {
-  verdict: "GİRİLİR" | "GİRİLMEZ";
-  risk_score: number;
-  opportunity_cost: string;
-  survival_plan: string;
-  detailed_analysis: string;
-  market_saturation?: string;
-  local_competitor_radar?: string;
-  case_study?: string;
+  board_opinions: {
+    investor: string;
+    growth_hacker: string;
+    lawyer: string;
+  };
+  financials: {
+    estimated_cac: string;
+    break_even_months: string;
+    year_1_revenue: string;
+  };
+  verdict: string;
 }
 
 function DataAnalyzer({ credits, userId, onSuccess, initialResult, setCredits }: { credits: number | null, userId: string | null, onSuccess: () => void, initialResult: AnalysisResult | null, setCredits: React.Dispatch<React.SetStateAction<number | null>> }) {
@@ -346,94 +349,42 @@ function DataAnalyzer({ credits, userId, onSuccess, initialResult, setCredits }:
            </div>
         ) : result ? (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full overflow-y-auto custom-scrollbar pr-2">
-            {/* Verdict Card */}
-            <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-6 flex items-center justify-between shadow-2xl backdrop-blur-md hover:border-white/10 transition-all duration-300 relative overflow-hidden group">
-              <div className={`absolute inset-0 opacity-5 transition-colors duration-500 ${
-                result.verdict === 'GİRİLİR' ? 'bg-emerald-500' : 'bg-rose-500'
+            {/* Verdict Hero */}
+            <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-8 text-center shadow-2xl backdrop-blur-md relative overflow-hidden group">
+              <div className={`absolute inset-0 opacity-10 transition-colors duration-500 ${
+                result.verdict.toLowerCase().includes('evet') ? 'bg-emerald-500' : 'bg-red-500'
               }`}></div>
-              <div>
-                <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Yapay Zeka Kararı</span>
-                <div className="mt-2">
-                  <span className={`inline-flex items-center px-4 py-1 rounded-full text-sm font-bold tracking-widest uppercase ${
-                    result.verdict === 'GİRİLİR' 
-                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                      : 'bg-red-500/10 text-red-500 border border-red-500/20'
-                  }`}>
-                    {result.verdict}
-                  </span>
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Risk Skoru</span>
-                <div className="flex items-baseline justify-end gap-1 mt-1">
-                  <span className={`text-3xl font-bold ${
-                    result.risk_score > 7 ? 'text-rose-400' : result.risk_score > 4 ? 'text-amber-400' : 'text-emerald-400'
-                  }`}>
-                    {result.risk_score}
-                  </span>
-                  <span className="text-zinc-600 text-sm font-medium">/10</span>
-                </div>
-              </div>
+              <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight relative z-10">
+                {result.verdict}
+              </h2>
             </div>
 
-            {/* Market Saturation Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-               <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 shadow-2xl backdrop-blur-md hover:border-white/10 transition-all duration-300">
-                  <div className="flex items-center gap-2 mb-3">
-                    <BarChart2 size={16} className="text-zinc-400" />
-                    <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">Pazar Doygunluğu</h3>
-                  </div>
-                  <div className={`text-lg font-bold ${
-                      result.market_saturation === 'Yüksek' ? 'text-rose-400' : 
-                      result.market_saturation === 'Orta' ? 'text-amber-400' : 'text-emerald-400'
-                    }`}>
-                    {result.market_saturation || 'Belirsiz'}
-                  </div>
-               </div>
-               
-               <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 shadow-2xl backdrop-blur-md hover:border-white/10 transition-all duration-300">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Radar size={16} className="text-zinc-400" />
-                    <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">Rekabet Radarı</h3>
-                  </div>
-                  <div className="text-sm text-zinc-300 font-medium leading-relaxed">
-                    {result.local_competitor_radar || 'Veri yok'}
-                  </div>
-               </div>
+            {/* Financial Projections */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+               <FinancialCard label="Tahmini CAC" value={result.financials.estimated_cac} />
+               <FinancialCard label="Başabaş Noktası" value={result.financials.break_even_months} />
+               <FinancialCard label="1. Yıl Ciro Tahmini" value={result.financials.year_1_revenue} />
             </div>
 
-            {/* Analysis Details */}
-            <div className="grid grid-cols-1 gap-4">
-              <ResultCard 
-                title="Stratejik Detaylı Analiz" 
-                icon={<FileText size={16} className="text-indigo-400" />}
-                content={result.detailed_analysis}
+            {/* Board Opinions */}
+            <div className="grid grid-cols-1 gap-6">
+              <BoardCard 
+                role="Melek Yatırımcı" 
+                content={result.board_opinions.investor}
+                color="border-rose-500/30"
+                icon={<Activity className="text-rose-400" />}
               />
-              
-              {result.case_study && (
-                <div className="bg-white/[0.03] rounded-2xl border border-indigo-500/20 p-6 shadow-2xl backdrop-blur-md hover:border-indigo-500/40 transition-colors relative overflow-hidden">
-                  <div className="absolute inset-0 bg-indigo-500/5 pointer-events-none"></div>
-                  <div className="flex items-center gap-2 mb-4 relative z-10">
-                    <div className="p-1.5 bg-indigo-500/20 rounded-lg">
-                      <Bot size={16} className="text-indigo-400" />
-                    </div>
-                    <h3 className="text-sm font-semibold text-indigo-300">AI Vaka Analizi (Case Study)</h3>
-                  </div>
-                  <p className="text-zinc-300 text-sm leading-7 relative z-10 italic">
-                    "{result.case_study}"
-                  </p>
-                </div>
-              )}
-
-              <ResultCard 
-                title="Fırsat Maliyeti" 
-                icon={<Activity size={16} className="text-rose-400" />}
-                content={result.opportunity_cost}
+              <BoardCard 
+                role="Growth Hacker" 
+                content={result.board_opinions.growth_hacker}
+                color="border-emerald-500/30"
+                icon={<Zap className="text-emerald-400" />}
               />
-              <ResultCard 
-                title="Hayatta Kalma Planı (İlk 30 Gün)" 
-                icon={<ShieldCheck size={16} className="text-emerald-400" />}
-                content={result.survival_plan}
+              <BoardCard 
+                role="Şirket Avukatı" 
+                content={result.board_opinions.lawyer}
+                color="border-blue-500/30"
+                icon={<ShieldCheck className="text-blue-400" />}
               />
             </div>
 
@@ -445,7 +396,7 @@ function DataAnalyzer({ credits, userId, onSuccess, initialResult, setCredits }:
             </div>
             <h3 className="text-zinc-300 font-medium mb-2">Analiz Bekleniyor</h3>
             <p className="text-zinc-500 text-sm max-w-xs leading-relaxed">
-              Yapay zeka motoru hazır. Sol panelden verilerinizi girerek analizi başlatın.
+              Yapay Zeka Yönetim Kurulu hazır. Sol panelden iş fikrinizi girerek toplantıyı başlatın.
             </p>
           </div>
         )}
@@ -454,18 +405,25 @@ function DataAnalyzer({ credits, userId, onSuccess, initialResult, setCredits }:
   );
 }
 
-import ReactMarkdown from 'react-markdown';
-
-function ResultCard({ title, icon, content }: { title: string, icon: React.ReactNode, content: string }) {
+function FinancialCard({ label, value }: { label: string, value: string }) {
   return (
-    <div className="bg-white/[0.03] rounded-2xl border border-white/5 p-6 shadow-2xl backdrop-blur-md hover:border-white/10 transition-all duration-300">
-      <div className="flex items-center gap-2 mb-4">
-        {icon}
-        <h3 className="text-sm font-semibold text-zinc-300">{title}</h3>
+    <div className="bg-white/[0.03] border border-white/5 rounded-xl p-4 text-center">
+      <div className="text-zinc-500 text-xs font-semibold uppercase tracking-widest mb-2">{label}</div>
+      <div className="text-xl font-bold text-white">{value}</div>
+    </div>
+  );
+}
+
+function BoardCard({ role, content, color, icon }: { role: string, content: string, color: string, icon: React.ReactNode }) {
+  return (
+    <div className={`bg-white/[0.02] rounded-xl border ${color} p-6 relative overflow-hidden`}>
+      <div className="flex items-center gap-3 mb-3">
+        <div className="p-2 bg-white/5 rounded-lg">{icon}</div>
+        <h3 className="text-lg font-bold text-zinc-200">{role}</h3>
       </div>
-      <div className="text-zinc-400 text-sm leading-7 prose prose-invert prose-sm max-w-none">
-        <ReactMarkdown>{content}</ReactMarkdown>
-      </div>
+      <p className="text-zinc-400 text-sm leading-7">
+        "{content}"
+      </p>
     </div>
   );
 }
