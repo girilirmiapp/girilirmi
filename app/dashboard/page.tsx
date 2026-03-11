@@ -264,6 +264,8 @@ function DataAnalyzer({ credits, userId, onSuccess, initialResult }: { credits: 
            console.error('Error deducting credit:', creditError);
         } else {
            // Update local state immediately
+           setCredits((prev) => (prev !== null ? prev - 1 : null));
+           toast.success('1 Kredi kullanıldı.');
            onSuccess(); 
         }
       }
