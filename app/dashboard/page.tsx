@@ -8,6 +8,19 @@ import {
   Clock, Settings, CreditCard, LogOut, ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
+import ReactMarkdown from 'react-markdown';
+
+const ResultCard = ({ title, icon, content }: { title: string, icon: React.ReactNode, content: string }) => (
+  <div className="bg-white/[0.03] rounded-2xl border border-white/5 p-6 shadow-2xl backdrop-blur-md hover:border-white/10 transition-all duration-300">
+    <div className="flex items-center gap-2 mb-4">
+      {icon}
+      <h3 className="text-sm font-semibold text-zinc-300">{title}</h3>
+    </div>
+    <div className="text-zinc-400 text-sm leading-7 prose prose-invert prose-sm max-w-none">
+      <ReactMarkdown>{content}</ReactMarkdown>
+    </div>
+  </div>
+);
 
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
