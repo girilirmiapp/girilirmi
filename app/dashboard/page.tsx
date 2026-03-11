@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { 
   Zap, Activity, ShieldCheck, FileText, Bot, Loader2, LayoutDashboard, Radar, Terminal, ArrowRight, BarChart2,
-  Clock, Settings, CreditCard, LogOut, ChevronRight
+  Clock, Settings, CreditCard, LogOut, ChevronRight, Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
@@ -222,17 +222,47 @@ function DataAnalyzer({ credits, userId, onSuccess, initialResult, setCredits }:
   const [data, setData] = useState('');
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [tier2Unlocked, setTier2Unlocked] = useState(false);
 
   // Sync result when initialResult changes (e.g. from sidebar history click)
   useEffect(() => {
     if (initialResult) {
       setResult(initialResult);
+      // Automatically unlock if it's history (optional, or force unlock if history shows it?)
+      // For now, let's keep it locked unless paid again, or maybe check if user already paid for this specific analysis?
+      // Since we don't track "paid tier" per analysis in DB yet, we'll reset to locked.
+      setTier2Unlocked(false);
     } else {
       // Reset if "New Analysis" is clicked
       setResult(null);
       setData('');
+      setTier2Unlocked(false);
     }
   }, [initialResult]);
+
+  const handleUnlock = async () => {
+    if (credits !== null && credits < 2) {
+      toast.error('Yetersiz kredi! Derinlemesine analiz için 2 krediye ihtiyacınız var.');
+      return;
+    }
+
+    if (userId) {
+      const { error: creditError } = await supabase
+        .from('profiles')
+        .update({ credits: (credits || 0) - 2 })
+        .eq('id', userId);
+        
+      if (creditError) {
+         console.error('Error deducting credit:', creditError);
+         toast.error('Kredi düşülürken hata oluştu.');
+      } else {
+         setCredits((prev) => (prev !== null && prev >= 2 ? prev - 2 : prev));
+         toast.success('Analiz derinleştirildi! (2 Kredi)');
+         setTier2Unlocked(true);
+         onSuccess(); 
+      }
+    }
+  };
 
   const analyze = async () => {
     if (!data.trim()) return;
@@ -410,24 +440,66 @@ function DataAnalyzer({ credits, userId, onSuccess, initialResult, setCredits }:
 
             {/* TIER 2 UPSELL SECTION */}
             <div className="mt-8 border-t border-white/10 pt-8">
-              <div className="bg-gradient-to-r from-indigo-900/20 to-purple-900/20 border border-indigo-500/20 rounded-2xl p-8 text-center relative overflow-hidden group hover:border-indigo-500/40 transition-all cursor-pointer"
-                   onClick={() => toast.info('Finansal analiz motoru hazırlanıyor...')}
-              >
-                <div className="absolute inset-0 bg-indigo-500/5 group-hover:bg-indigo-500/10 transition-colors"></div>
-                <div className="relative z-10 flex flex-col items-center gap-4">
-                  <div className="p-3 bg-indigo-500/20 rounded-full border border-indigo-500/30">
-                    <Sparkles size={24} className="text-indigo-400" />
+              {!tier2Unlocked ? (
+                <div className="bg-gradient-to-r from-indigo-900/20 to-purple-900/20 border border-indigo-500/20 rounded-2xl p-8 text-center relative overflow-hidden group hover:border-indigo-500/40 transition-all cursor-pointer"
+                     onClick={handleUnlock}
+                >
+                  <div className="absolute inset-0 bg-indigo-500/5 group-hover:bg-indigo-500/10 transition-colors"></div>
+                  <div className="relative z-10 flex flex-col items-center gap-4">
+                    <div className="p-3 bg-indigo-500/20 rounded-full border border-indigo-500/30">
+                      <Sparkles size={24} className="text-indigo-400" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white">Derinlemesine Finans & Kurul Kararı</h3>
+                    <p className="text-zinc-400 max-w-md mx-auto text-sm">
+                      Yapay zeka yönetim kurulu (Yatırımcı, Growth Hacker, Avukat) ve detaylı finansal projeksiyonlar (CAC, Ciro) için kilidi açın.
+                    </p>
+                    <button className="mt-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-indigo-500/20 flex items-center gap-2 transition-all active:scale-95">
+                      <Bot size={18} />
+                      Analizi Derinleştir (Ekstra 2 Kredi)
+                    </button>
                   </div>
-                  <h3 className="text-xl font-bold text-white">Derinlemesine Finans & Kurul Kararı</h3>
-                  <p className="text-zinc-400 max-w-md mx-auto text-sm">
-                    Yapay zeka yönetim kurulu (Yatırımcı, Growth Hacker, Avukat) ve detaylı finansal projeksiyonlar (CAC, Ciro) için kilidi açın.
-                  </p>
-                  <button className="mt-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-indigo-500/20 flex items-center gap-2 transition-all active:scale-95">
-                    <Bot size={18} />
-                    Analizi Derinleştir (Ekstra 2 Kredi)
-                  </button>
                 </div>
-              </div>
+              ) : (
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Sparkles className="text-indigo-400" size={20} />
+                    <h3 className="text-lg font-bold text-white">Premium Analiz Raporu</h3>
+                  </div>
+
+                  {/* Financial Projections */}
+                  {result.financials && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                       <FinancialCard label="Tahmini CAC" value={result.financials.estimated_cac} />
+                       <FinancialCard label="Başabaş Noktası" value={result.financials.break_even_months} />
+                       <FinancialCard label="1. Yıl Ciro Tahmini" value={result.financials.year_1_revenue} />
+                    </div>
+                  )}
+
+                  {/* Board Opinions */}
+                  {result.board_opinions && (
+                    <div className="grid grid-cols-1 gap-6">
+                      <BoardCard 
+                        role="Melek Yatırımcı" 
+                        content={result.board_opinions.investor}
+                        color="border-rose-500/30"
+                        icon={<Activity className="text-rose-400" />}
+                      />
+                      <BoardCard 
+                        role="Growth Hacker" 
+                        content={result.board_opinions.growth_hacker}
+                        color="border-emerald-500/30"
+                        icon={<Zap className="text-emerald-400" />}
+                      />
+                      <BoardCard 
+                        role="Şirket Avukatı" 
+                        content={result.board_opinions.lawyer}
+                        color="border-blue-500/30"
+                        icon={<ShieldCheck className="text-blue-400" />}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
           </div>
