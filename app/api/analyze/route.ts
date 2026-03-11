@@ -57,6 +57,8 @@ export async function POST(request: Request) {
 7. survival_plan (GUNCELLENDI): Jenerik laflar etme. Kurucuya "Ilk 30 gunde yapilmasi gereken 3 taktiksel adim" seklinde milimetrik bir yol haritasi ver. 
 8. local_competitor_radar: Rakiplerin neyi yanlis yaptigini veya hangi avantaja sahip oldugunu analiz et.
 
+If the user input is not a business idea or is nonsensical, respond ONLY with a JSON field error: "Lütfen geçerli bir iş fikri giriniz." and do not generate a fake analysis.
+
 Aşağıdaki JSON formatında yanıt ver:
 {
   "verdict": "GİRİLİR" veya "GİRİLMEZ",

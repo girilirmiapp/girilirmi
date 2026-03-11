@@ -210,6 +210,12 @@ function DataAnalyzer({ credits, userId, onSuccess, initialResult }: { credits: 
   const analyze = async () => {
     if (!data.trim()) return;
     
+    // AI Hallucination Fix: Minimum Length Check
+    if (data.trim().length < 20) {
+      toast.error('Lütfen analiz edilebilecek detaylı bir iş fikri giriniz. (En az 20 karakter)');
+      return;
+    }
+    
     // Client-side credit check
     if (credits !== null && credits <= 0) {
       toast.error('Krediniz bitti. Devam etmek için paket satın alın.');
@@ -248,11 +254,18 @@ function DataAnalyzer({ credits, userId, onSuccess, initialResult }: { credits: 
           toast.error('Analiz kaydedilemedi.');
         }
 
-        // Deduct credit
-        const { error: creditError } = await supabase.rpc('decrement_credits', { user_id: userId });
-        if (creditError) console.error('Error deducting credit:', creditError);
-        
-        onSuccess();
+        // Fix Credit Leak: Manual Update
+        const { error: creditError } = await supabase
+          .from('profiles')
+          .update({ credits: (credits || 0) - 1 })
+          .eq('id', userId);
+          
+        if (creditError) {
+           console.error('Error deducting credit:', creditError);
+        } else {
+           // Update local state immediately
+           onSuccess(); 
+        }
       }
 
       toast.success('Analiz tamamlandı');
@@ -436,6 +449,8 @@ function DataAnalyzer({ credits, userId, onSuccess, initialResult }: { credits: 
   );
 }
 
+import ReactMarkdown from 'react-markdown';
+
 function ResultCard({ title, icon, content }: { title: string, icon: React.ReactNode, content: string }) {
   return (
     <div className="bg-white/[0.03] rounded-2xl border border-white/5 p-6 shadow-2xl backdrop-blur-md hover:border-white/10 transition-all duration-300">
@@ -443,9 +458,9 @@ function ResultCard({ title, icon, content }: { title: string, icon: React.React
         {icon}
         <h3 className="text-sm font-semibold text-zinc-300">{title}</h3>
       </div>
-      <p className="text-zinc-400 text-sm leading-7 whitespace-pre-wrap">
-        {content}
-      </p>
+      <div className="text-zinc-400 text-sm leading-7 prose prose-invert prose-sm max-w-none">
+        <ReactMarkdown>{content}</ReactMarkdown>
+      </div>
     </div>
   );
 }
