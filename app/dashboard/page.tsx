@@ -11,10 +11,10 @@ import { toast } from 'sonner';
 
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [credits, setCredits] = useState<number | null>(null);
+  const [history, setHistory] = useState<any[]>([]);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [analyses, setAnalyses] = useState<any[]>([]);
   const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisResult | null>(null);
   const router = useRouter();
 
@@ -29,43 +29,45 @@ export default function Dashboard() {
       } else {
         setUserEmail(session.user.email || null);
         setUserId(session.user.id);
-        fetchCredits(session.user.id);
-        fetchAnalyses(session.user.id);
+        
+        // Fetch Credits
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('credits')
+          .eq('id', session.user.id)
+          .single();
+        if (profileData) setCredits(profileData.credits);
+
+        // Fetch History
+        const { data: historyData } = await supabase
+          .from('analyses')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .order('created_at', { ascending: false });
+        if (historyData) setHistory(historyData);
       }
     };
     
     checkUser();
   }, [router]);
 
-  const fetchCredits = async (uid: string) => {
-    const { data, error } = await supabase
+  // Helper functions for refreshing data
+  const refreshData = async (uid: string) => {
+    // Fetch Credits
+    const { data: profileData } = await supabase
       .from('profiles')
       .select('credits')
       .eq('id', uid)
       .single();
-    
-    if (data) {
-      setCredits(data.credits);
-    }
-  };
+    if (profileData) setCredits(profileData.credits);
 
-  const fetchAnalyses = async (uid: string) => {
-    const { data, error } = await supabase
+    // Fetch History
+    const { data: historyData } = await supabase
       .from('analyses')
       .select('*')
       .eq('user_id', uid)
       .order('created_at', { ascending: false });
-
-    if (data) {
-      setAnalyses(data);
-    }
-  };
-
-  const handleAnalysisSuccess = () => {
-    if (userId) {
-      fetchCredits(userId);
-      fetchAnalyses(userId);
-    }
+    if (historyData) setHistory(historyData);
   };
 
   if (!mounted) return null;
@@ -105,8 +107,8 @@ export default function Dashboard() {
           
           <div className="mt-4 mb-2 px-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Geçmiş Analizler</div>
           
-          {analyses.length > 0 ? (
-            analyses.map((analysis) => (
+          {history.length > 0 ? (
+            history.map((analysis) => (
               <div 
                 key={analysis.id}
                 onClick={() => setSelectedAnalysis(analysis.result)}
@@ -152,7 +154,7 @@ export default function Dashboard() {
               <div className="text-zinc-500 text-xs font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">
                 <LayoutDashboard size={14} className="text-indigo-500" /> Toplam Analiz
               </div>
-              <div className="text-3xl font-light text-white">{analyses.length}</div>
+              <div className="text-3xl font-light text-white">{history.length}</div>
            </div>
            <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-6 backdrop-blur-md shadow-2xl relative overflow-hidden">
               <div className="absolute right-0 top-0 w-24 h-24 bg-red-500/10 blur-2xl"></div>
@@ -160,8 +162,8 @@ export default function Dashboard() {
                 <Activity size={14} className="text-red-500" /> Risk Ortalaması
               </div>
               <div className="text-3xl font-light text-red-400">
-                {analyses.length > 0 
-                  ? (analyses.reduce((acc, curr) => acc + (curr.result?.risk_score || 0), 0) / analyses.length).toFixed(1)
+                {history.length > 0 
+                  ? (history.reduce((acc, curr) => acc + (curr.result?.risk_score || 0), 0) / history.length).toFixed(1)
                   : '-'}
               </div>
            </div>
@@ -171,7 +173,8 @@ export default function Dashboard() {
         <DataAnalyzer 
           credits={credits} 
           userId={userId} 
-          onSuccess={handleAnalysisSuccess} 
+          onSuccess={() => userId && refreshData(userId)}
+          setCredits={setCredits}
           initialResult={selectedAnalysis}
         />
 
@@ -191,7 +194,7 @@ interface AnalysisResult {
   case_study?: string;
 }
 
-function DataAnalyzer({ credits, userId, onSuccess, initialResult }: { credits: number | null, userId: string | null, onSuccess: () => void, initialResult: AnalysisResult | null }) {
+function DataAnalyzer({ credits, userId, onSuccess, initialResult, setCredits }: { credits: number | null, userId: string | null, onSuccess: () => void, initialResult: AnalysisResult | null, setCredits: React.Dispatch<React.SetStateAction<number | null>> }) {
   const [data, setData] = useState('');
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -264,7 +267,7 @@ function DataAnalyzer({ credits, userId, onSuccess, initialResult }: { credits: 
            console.error('Error deducting credit:', creditError);
         } else {
            // Update local state immediately
-           setCredits((prev) => (prev !== null ? prev - 1 : null));
+           setCredits((prev) => (prev !== null && prev > 0 ? prev - 1 : prev));
            toast.success('1 Kredi kullanıldı.');
            onSuccess(); 
         }
