@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { 
   Zap, Activity, ShieldCheck, FileText, Bot, Loader2, LayoutDashboard, Radar, Terminal, ArrowRight, BarChart2,
-  Clock, Settings, CreditCard, LogOut, ChevronRight, Sparkles
+  Clock, Settings, CreditCard, LogOut, ChevronRight, Sparkles, PieChart, Users, Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
@@ -30,6 +30,7 @@ export default function Dashboard() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisResult | null>(null);
+  const [activeTab, setActiveTab] = useState<'analiz' | 'finans' | 'kurul' | 'pdf'>('analiz');
   const router = useRouter();
 
   useEffect(() => {
@@ -112,20 +113,31 @@ export default function Dashboard() {
         )}
 
         <nav className="flex flex-col gap-2 flex-1 overflow-y-auto custom-scrollbar">
-          <div 
-            onClick={() => setSelectedAnalysis(null)}
-            className={`bg-white/10 text-white font-medium px-4 py-2.5 rounded-lg border border-white/10 shadow-sm transition-all cursor-pointer flex items-center gap-3 ${selectedAnalysis === null ? 'bg-indigo-500/20 border-indigo-500/30 text-indigo-300' : ''}`}
-          >
-            <LayoutDashboard size={18} /> Yeni Analiz
-          </div>
-          
-          <div className="mt-4 mb-2 px-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Geçmiş Analizler</div>
+          <div className="space-y-2 mt-6"> 
+             <button onClick={() => setActiveTab('analiz')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'analiz' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}`}> 
+               <LayoutDashboard size={18} /> <span className="font-medium text-sm">Hızlı Analiz</span> 
+             </button> 
+             <button onClick={() => setActiveTab('finans')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'finans' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}`}> 
+               <PieChart size={18} /> <span className="font-medium text-sm">Finansal Simülatör</span> 
+             </button> 
+             <button onClick={() => setActiveTab('kurul')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'kurul' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}`}> 
+               <Users size={18} /> <span className="font-medium text-sm">Yönetim Kurulu Paneli</span> 
+             </button> 
+             <button onClick={() => setActiveTab('pdf')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'pdf' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}`}> 
+               <Download size={18} /> <span className="font-medium text-sm">Pitch Deck (PDF)</span> 
+             </button> 
+           </div>
+
+          <div className="mt-8 mb-2 px-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Geçmiş Analizler</div>
           
           {history.length > 0 ? (
             history.map((analysis) => (
               <div 
                 key={analysis.id}
-                onClick={() => setSelectedAnalysis(analysis.result)}
+                onClick={() => {
+                  setSelectedAnalysis(analysis.result);
+                  setActiveTab('analiz'); // Switch to main tab to view result
+                }}
                 className={`text-zinc-400 hover:text-white hover:bg-white/5 px-4 py-2.5 rounded-lg transition-all cursor-pointer flex items-center gap-3 text-sm truncate ${selectedAnalysis === analysis.result ? 'bg-white/5 text-white' : ''}`}
               >
                 <Clock size={14} className="flex-shrink-0" />
@@ -183,14 +195,46 @@ export default function Dashboard() {
            </div>
         </div>
 
-        {/* DATA ANALYZER COMPONENT INTEGRATION */}
-        <DataAnalyzer 
-          credits={credits} 
-          userId={userId} 
-          onSuccess={() => userId && refreshData(userId)}
-          setCredits={setCredits}
-          initialResult={selectedAnalysis}
-        />
+        {activeTab === 'analiz' && (
+          /* DATA ANALYZER COMPONENT INTEGRATION */
+          <DataAnalyzer 
+            credits={credits} 
+            userId={userId} 
+            onSuccess={() => userId && refreshData(userId)}
+            setCredits={setCredits}
+            initialResult={selectedAnalysis}
+          />
+        )}
+
+        {activeTab === 'finans' && (
+          <div className="flex-1 flex items-center justify-center border border-dashed border-white/10 rounded-2xl bg-white/[0.01]">
+            <div className="text-center">
+              <PieChart size={48} className="mx-auto text-zinc-600 mb-4" />
+              <h3 className="text-xl font-bold text-zinc-300">Finansal Simülatör</h3>
+              <p className="text-zinc-500 mt-2">Bu modül yakında hizmetinizde olacak.</p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'kurul' && (
+          <div className="flex-1 flex items-center justify-center border border-dashed border-white/10 rounded-2xl bg-white/[0.01]">
+            <div className="text-center">
+              <Users size={48} className="mx-auto text-zinc-600 mb-4" />
+              <h3 className="text-xl font-bold text-zinc-300">Yönetim Kurulu Paneli</h3>
+              <p className="text-zinc-500 mt-2">Bu modül yakında hizmetinizde olacak.</p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'pdf' && (
+          <div className="flex-1 flex items-center justify-center border border-dashed border-white/10 rounded-2xl bg-white/[0.01]">
+            <div className="text-center">
+              <Download size={48} className="mx-auto text-zinc-600 mb-4" />
+              <h3 className="text-xl font-bold text-zinc-300">Pitch Deck Oluşturucu</h3>
+              <p className="text-zinc-500 mt-2">Bu modül yakında hizmetinizde olacak.</p>
+            </div>
+          </div>
+        )}
 
       </main>
     </div>
