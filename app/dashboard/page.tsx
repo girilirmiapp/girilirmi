@@ -10,6 +10,9 @@ import {
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
 const ResultCard = ({ title, icon, content }: { title: string, icon: React.ReactNode, content: string }) => (
   <div className="bg-white/[0.03] rounded-2xl border border-white/5 p-6 shadow-2xl backdrop-blur-md hover:border-white/10 transition-all duration-300">
     <div className="flex items-center gap-2 mb-4">
@@ -37,6 +40,9 @@ export default function Dashboard() {
   const [boardInput, setBoardInput] = useState('');
   const [isBoardLoading, setIsBoardLoading] = useState(false);
   const [boardResult, setBoardResult] = useState<any | null>(null);
+  const [deckInput, setDeckInput] = useState('');
+  const [isDeckLoading, setIsDeckLoading] = useState(false);
+  const [deckResult, setDeckResult] = useState<any | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -210,6 +216,131 @@ export default function Dashboard() {
       toast.error('Analiz sırasında bir hata oluştu.');
     } finally {
       setIsBoardLoading(false);
+    }
+  };
+
+  const handleCreateDeck = async () => {
+    if (deckInput.length <= 20) {
+      toast.error('Lütfen en az 20 karakterlik detaylı bir iş fikri girin.');
+      return;
+    }
+
+    if (credits !== null && credits < 5) {
+      toast.error('Yetersiz kredi! Pitch Deck oluşturmak 5 kredi gerektirir.');
+      return;
+    }
+
+    setIsDeckLoading(true);
+    setDeckResult(null);
+
+    try {
+      const response = await fetch('/api/deck', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: deckInput }),
+      });
+
+      if (!response.ok) throw new Error('Sunum içeriği oluşturulamadı.');
+
+      const json = await response.json();
+      setDeckResult(json);
+      
+      // Deduct credits only after successful generation? 
+      // The prompt says "Ensure 5 credits are deducted from Supabase on success." (of Download PDF).
+      // But typically we deduct on generation. Let's stick to the prompt: "Add a 'Download PDF' button... Ensure 5 credits are deducted... on success".
+      // This implies credit deduction happens when downloading? That's unusual. 
+      // Let's assume the user pays for the GENERATION (viewing the slides) and then can download freely.
+      // Or maybe pay for the DOWNLOAD.
+      // Given the previous code deducted on generation, I'll stick to that for safety, OR follow the "Download PDF triggers the new function" instruction.
+      // Instruction: "Add a 'Download PDF' button that triggers the new function. Ensure 5 credits are deducted from Supabase on success."
+      // Okay, so the deduction happens on DOWNLOAD.
+      // So handleCreateDeck just fetches data.
+      
+      toast.success('Sunum önizlemesi hazır! İndirmek için butona tıklayın.');
+
+    } catch (error) {
+      console.error(error);
+      toast.error('Sunum oluşturulurken bir hata oluştu.');
+    } finally {
+      setIsDeckLoading(false);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!deckResult) return;
+    
+    // Check credits again just in case
+    if (credits !== null && credits < 5) {
+      toast.error('Yetersiz kredi! İndirmek için 5 kredi gerektirir.');
+      return;
+    }
+
+    const element = document.getElementById('pdf-content');
+    if (!element) {
+      toast.error('PDF içeriği bulunamadı.');
+      return;
+    }
+
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2, // Higher resolution
+        backgroundColor: '#14141E', // Match theme
+        useCORS: true
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      // Calculate aspect ratio to fit A4
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Handle multi-page if content is long (though deck is usually slide by slide)
+      // Since we are capturing the whole 'pdf-content' div, it might be long.
+      // Ideally, we should capture each slide individually.
+      // But for simplicity and following the "Screenshot to PDF" instruction which implies a single capture or simple flow:
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      pdf.save('is_fikri_sunumu.pdf');
+
+      // Deduct Credits
+      if (userId) {
+        const { error: creditError } = await supabase
+          .from('profiles')
+          .update({ credits: (credits || 0) - 5 })
+          .eq('id', userId);
+
+        if (creditError) {
+          console.error('Error deducting credit:', creditError);
+        } else {
+          setCredits((prev) => (prev !== null && prev >= 5 ? prev - 5 : prev));
+          toast.success('5 Kredi hesabınızdan düşüldü.');
+          
+          await supabase.from('analyses').insert({
+            user_id: userId,
+            idea_text: `[DECK] ${deckInput}`,
+            result: { ...deckResult, type: 'deck' },
+          });
+          
+          refreshData(userId);
+        }
+      }
+
+    } catch (err) {
+      console.error('PDF Generation Error:', err);
+      toast.error('PDF oluşturulurken hata oluştu.');
     }
   };
 
@@ -423,12 +554,87 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'pdf' && (
-          <div className="flex-1 flex items-center justify-center border border-dashed border-white/10 rounded-2xl bg-white/[0.01]">
-            <div className="text-center">
-              <Download size={48} className="mx-auto text-zinc-600 mb-4" />
-              <h3 className="text-xl font-bold text-zinc-300">Pitch Deck Oluşturucu</h3>
-              <p className="text-zinc-500 mt-2">Bu modül yakında hizmetinizde olacak.</p>
+          <div className="space-y-6">
+            <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl">
+              <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2"><FileText className="text-indigo-400"/> Yatırımcı Sunumu (Pitch Deck)</h2>
+              <p className="text-gray-400 text-sm mb-4">İş fikrinizi girin, 10 slaytlık profesyonel PDF sunumunuzu anında indirin.</p>
+              <textarea 
+                value={deckInput} 
+                onChange={(e) => setDeckInput(e.target.value)} 
+                placeholder="Örn: B2B firmalar için yapay zeka destekli ön muhasebe yazılımı (SaaS)..." 
+                className="w-full h-32 bg-black/50 border border-white/10 rounded-xl p-4 text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500 transition-colors mb-4" 
+              />
+              <button 
+                onClick={handleCreateDeck} 
+                disabled={isDeckLoading || !deckInput} 
+                className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2" 
+              > 
+                {isDeckLoading ? (
+                  <>
+                    <Loader2 className="animate-spin" size={16}/> Sunum Hazırlanıyor...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={16}/> Sunum İçeriği Oluştur
+                  </>
+                )}
+              </button> 
             </div>
+            
+            {deckResult && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {/* PREVIEW & DOWNLOAD SECTION */}
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-white font-bold flex items-center gap-2"><FileText size={18}/> Sunum Önizlemesi</h3>
+                  <button 
+                    onClick={handleDownloadPDF}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
+                  >
+                    <Download size={16} /> PDF İndir (5 Kredi)
+                  </button>
+                </div>
+
+                {/* PDF CONTENT TO CAPTURE */}
+                <div id="pdf-content" className="bg-[#14141E] p-8 rounded-none border border-white/5 space-y-8">
+                  <div className="text-center border-b border-white/10 pb-8 mb-8">
+                    <h1 className="text-4xl font-bold text-white mb-2">Yatırımcı Sunumu</h1>
+                    <p className="text-indigo-400 font-mono text-sm">GIRILIRMI.COM AI GENERATED</p>
+                  </div>
+                  
+                  {deckResult.slides.map((slide: any, index: number) => (
+                    <div key={index} className="mb-12 break-inside-avoid">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">
+                          {index + 1}
+                        </div>
+                        <h2 className="text-2xl font-bold text-white">{slide.title}</h2>
+                      </div>
+                      <div className="bg-white/5 p-6 rounded-xl border-l-4 border-indigo-500">
+                        <p className="text-gray-300 text-lg leading-relaxed">{slide.content}</p>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="text-center pt-8 border-t border-white/10 mt-12">
+                    <p className="text-gray-500 text-xs">Bu rapor Yapay Zeka tarafından oluşturulmuştur.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!deckResult && (
+              <div className="bg-indigo-900/10 border border-indigo-500/20 p-6 rounded-2xl flex items-start gap-4">
+                <div className="p-3 bg-indigo-500/20 rounded-lg">
+                  <Sparkles size={24} className="text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="text-indigo-300 font-bold mb-1">Otomatik İçerik Üretimi</h3>
+                  <p className="text-indigo-200/60 text-sm leading-relaxed">
+                    Yapay zeka; Problem, Çözüm, Pazar Büyüklüğü, İş Modeli ve Finansal Hedefler gibi kritik başlıkları sizin için profesyonel bir dille yazar ve tasarlar.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
