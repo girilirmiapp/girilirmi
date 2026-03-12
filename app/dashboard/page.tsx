@@ -14,12 +14,12 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 const ResultCard = ({ title, icon, content }: { title: string, icon: React.ReactNode, content: string }) => (
-  <div className="bg-white/[0.03] rounded-2xl border border-white/5 p-6 shadow-2xl backdrop-blur-md hover:border-white/10 transition-all duration-300">
+  <div className="bg-white/[0.03] rounded-2xl border border-white/5 border-l-4 border-l-indigo-500 p-6 shadow-2xl backdrop-blur-md hover:border-white/10 transition-all duration-300">
     <div className="flex items-center gap-2 mb-4">
       {icon}
       <h3 className="text-sm font-semibold text-zinc-300">{title}</h3>
     </div>
-    <div className="text-zinc-400 text-sm leading-7 prose prose-invert prose-sm max-w-none">
+    <div className="text-zinc-400 text-sm leading-7 prose prose-invert prose-sm max-w-none whitespace-pre-wrap">
       <ReactMarkdown>{content}</ReactMarkdown>
     </div>
   </div>
@@ -397,7 +397,9 @@ export default function Dashboard() {
               </div>
             ))
           ) : (
-            <div className="px-4 py-2 text-xs text-zinc-600 italic">Henüz analiz yok.</div>
+            <div className="p-4 bg-white/5 rounded-xl border border-dashed border-white/10 text-center">
+              <p className="text-xs text-gray-400">Önceki analizleriniz burada listelenecek.</p>
+            </div>
           )}
 
           <div className="mt-auto pt-4 border-t border-white/5">
@@ -855,13 +857,19 @@ function DataAnalyzer({ credits, userId, onSuccess, initialResult, setCredits }:
               <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight relative z-10">
                 {result.verdict}
               </h2>
-              <div className="mt-4 flex items-center justify-center gap-2">
-                <span className="text-zinc-400 text-sm font-medium uppercase tracking-widest">Risk Skoru</span>
-                <span className={`text-2xl font-bold ${
-                  result.risk_score > 7 ? 'text-rose-400' : result.risk_score > 4 ? 'text-amber-400' : 'text-emerald-400'
-                }`}>
-                  {result.risk_score}/10
-                </span>
+              <div className="mt-4 w-full">
+                <div className="w-full bg-gray-700 rounded-full h-3 mb-2">
+                  <div 
+                    className={`h-3 rounded-full transition-all duration-1000 ${result.risk_score > 7 ? 'bg-red-500' : result.risk_score > 4 ? 'bg-amber-500' : 'bg-emerald-500'}`} 
+                    style={{ width: `${result.risk_score * 10}%` }}
+                  ></div>
+                </div>
+                <div className="flex justify-between items-center text-xs font-medium uppercase tracking-widest">
+                  <span className="text-zinc-500">Güven Endeksi</span>
+                  <span className={result.risk_score > 7 ? 'text-red-400' : result.risk_score > 4 ? 'text-amber-400' : 'text-emerald-400'}>
+                    Risk Seviyesi: {result.risk_score}/10
+                  </span>
+                </div>
               </div>
             </div>
 

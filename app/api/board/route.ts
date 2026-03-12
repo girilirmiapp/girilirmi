@@ -37,15 +37,15 @@ export async function POST(request: Request) {
       return NextResponse.json(mockResponse);
     }
 
-    const systemPrompt = `Sen 3 farklı kişiden oluşan acımasız bir yönetim kurulunun beynisin. 1. Acımasız Melek Yatırımcı (ROI, pazar büyüklüğü, exit stratejisi ve neden batacağı odaklı). 2. Agresif Growth Hacker (Müşteri edinme kanalları, viral döngü ve pazarlama hileleri odaklı). 3. Paranoyak Şirket Avukatı (KVKK, regülasyon, tazminat riskleri ve fikri mülkiyet odaklı). İş fikrini bu 3 farklı ağızdan eleştir. SADECE aşağıdaki JSON formatında yanıt ver.
-
-REQUIRED JSON STRUCTURE:
-{
-  "investor": "Yatırımcı ağzıyla 3 cümlelik sert eleştiri ve ROI beklentisi.",
-  "growth_hacker": "Growth hacker ağzıyla 3 cümlelik pazarlama taktiği.",
-  "lawyer": "Avukat ağzıyla 3 cümlelik hukuki risk analizi.",
-  "verdict": "Kurulun oybirliğiyle aldığı nihai karar (Örn: Riskli ama yatırım yapılabilir)."
-}`;
+    const systemPrompt = `Sen üst düzey bir stratejistsin. Cevapların ÇOK DETAYLI, UZUN ve KAPSAMLI olmalı. Her analizi en az 2-3 paragraf ve vurucu maddeler (bullet points) halinde yaz. Kurumsal, agresif ve son derece profesyonel bir dil kullan. Asla kısa kesme.
+    
+    REQUIRED JSON STRUCTURE:
+    {
+      "investor": "Yatırımcı ağzıyla detaylı, acımasız eleştiri ve ROI beklentisi.",
+      "growth_hacker": "Growth hacker ağzıyla kapsamlı, viral ve agresif pazarlama taktiği.",
+      "lawyer": "Avukat ağzıyla tüm hukuki riskleri içeren detaylı analiz.",
+      "verdict": "Kurulun oybirliğiyle aldığı nihai karar (Örn: Riskli ama yatırım yapılabilir)."
+    }`;
     
     const completion = await groq.chat.completions.create({
       messages: [
